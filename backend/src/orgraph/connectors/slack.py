@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import re
+from datetime import UTC, datetime
 from typing import Any
 
-from ..graph.ontology import entity_key, person_key
+from ..graph.ontology import TEXT_PROP, entity_key, person_key
 from . import register
 from ._http import as_bool, as_int, json_body, require, send
 from .base import (
@@ -21,6 +23,8 @@ from .base import (
 API = "https://slack.com/api"
 PAGE_SIZE = 200
 MAX_PAGES = 25
+MAX_TEXT = 4000
+MENTION = re.compile(r"<@(U[A-Z0-9]+)")
 
 
 class SlackConnector(Connector):
@@ -118,6 +122,18 @@ class SlackConnector(Connector):
                         type="number",
                         default=500,
                     ),
+                ],
+            ),
+            OperationSpec(
+                name="sync_messages",
+                title="Sync messages",
+                kind="sync",
+                description="Add a channel's recent messages, with authors, threads and mentions.",
+                params=[
+                    FieldSpec(
+                        name="channel", label="Channel ID", required=True, placeholder="C0123456789"
+                    ),
+                    FieldSpec(name="limit", label="Limit", type="number", default=200),
                 ],
             ),
         ],
@@ -331,6 +347,57 @@ class SlackConnector(Connector):
         return OperationResult(
             output={"teams": len(channels), "people": len(used), "memberships": len(delta.edges)},
             graph=delta,
+        )
+
+    def _op_sync_messages(self, params: dict[str, Any], ctx: ConnectorContext) -> OperationResult:
+        channel = params["channel"]
+        limit = as_int(params.get("limit"), 200, 1, 1000)
+        workspace_url = self._workspace_url(ctx)
+        people = {u["id"]: self._person_node(u, workspace_url).key for u in self._humans(ctx)}
+        body = self._call(
+            ctx, "conversations.history", params={"channel": channel, "limit": limit}
+        )
+        team_key = entity_key("slack", "channel", channel)
+
+        def msg_key(ts: str) -> str:
+            return entity_key("slack", "msg", f"{channel}:{ts}")
+
+        def edge(src_label: str, src: str, type: str, dst_label: str, dst: str) -> EdgeUpsert:
+            return EdgeUpsert(
+                src_label=src_label, src_key=src, type=type, dst_label=dst_label, dst_key=dst
+            )
+
+        delta = GraphDelta()
+        for m in body.get("messages") or []:
+            if not m.get("user"):
+                continue
+            ts, text = m["ts"], m.get("text", "")
+            key = msg_key(ts)
+            delta.nodes.append(
+                NodeUpsert(
+                    label="Message",
+                    key=key,
+                    props={
+                        "name": text[:80],
+                        TEXT_PROP: text[:MAX_TEXT],
+                        "created_at": datetime.fromtimestamp(float(ts), UTC).isoformat(
+                            timespec="seconds"
+                        ),
+                        "url": f"{workspace_url}archives/{channel}/p{ts.replace('.', '')}",
+                    },
+                )
+            )
+            author = people.get(m["user"]) or person_key(None, "slack", m["user"])
+            delta.edges.append(edge("Person", author, "AUTHORED", "Message", key))
+            delta.edges.append(edge("Message", key, "POSTED_IN", "Team", team_key))
+            parent = m.get("thread_ts")
+            if parent and parent != ts:
+                delta.edges.append(edge("Message", key, "REPLY_TO", "Message", msg_key(parent)))
+            for user_id in MENTION.findall(text):
+                mentioned = people.get(user_id) or person_key(None, "slack", user_id)
+                delta.edges.append(edge("Message", key, "MENTIONS", "Person", mentioned))
+        return OperationResult(
+            output={"channel": channel, "messages": len(delta.nodes)}, graph=delta
         )
 
 

@@ -4,6 +4,9 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query
 
+from ...graph import demo
+from ...graph.evaluate import score
+from ...graph.linking import link_graph
 from ...graph.ontology import EDGE_TYPES, NODE_LABELS
 from ...models import new_id, utcnow
 from ...store import Edge, Node, StoreError
@@ -178,6 +181,24 @@ def subgraph(
     ids = {n.id for n in nodes}
     edges = [e for e in store.edges(ctx.graph) if e.src in ids and e.dst in ids]
     return SubgraphOut(nodes=[_node_out(n) for n in nodes], edges=[_edge_out(e) for e in edges])
+
+
+@router.post("/demo", status_code=201)
+def load_demo(ctx: WorkspaceDep) -> dict[str, Any]:
+    """Write the fake demo company into this workspace's graph."""
+    return {"loaded": demo.load(ctx.repos.store, ctx.graph)}
+
+
+@router.post("/link")
+def link(ctx: WorkspaceDep) -> dict[str, Any]:
+    """Run the linker over the whole graph."""
+    return link_graph(ctx.repos.store, ctx.graph)
+
+
+@router.get("/link/score")
+def link_score(ctx: WorkspaceDep) -> dict[str, dict[str, float | int]]:
+    """Precision/recall of the current links against the demo company's gold links."""
+    return score(ctx.repos.store, ctx.graph)
 
 
 @router.post("/query")

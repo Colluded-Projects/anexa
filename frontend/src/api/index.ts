@@ -15,6 +15,8 @@ import type {
   GraphNodeDetail,
   GraphStats,
   JsonObject,
+  LinkResult,
+  LinkScore,
   Me,
   Member,
   Ontology,
@@ -158,6 +160,10 @@ export function workspaceApi(workspaceId: string) {
         request<void>(`${base}/graph/edges`, { method: "DELETE", query: edge }),
       subgraph: (filter: { label?: string; limit?: number } = {}) =>
         request<Subgraph>(`${base}/graph/subgraph`, { query: filter }),
+      loadDemo: () =>
+        request<{ loaded: Record<string, JsonObject> }>(`${base}/graph/demo`, { method: "POST" }),
+      link: () => request<LinkResult>(`${base}/graph/link`, { method: "POST" }),
+      linkScore: () => request<LinkScore>(`${base}/graph/link/score`),
       query: (cypher: string, params: JsonObject = {}) =>
         request<{ rows: JsonObject[] }>(`${base}/graph/query`, {
           method: "POST",

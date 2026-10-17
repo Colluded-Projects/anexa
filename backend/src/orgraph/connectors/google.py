@@ -6,9 +6,9 @@ from typing import Any
 
 import jwt
 
-from ..graph.ontology import entity_key, person_key
+from ..graph.ontology import TEXT_PROP, entity_key, person_key
 from . import register
-from ._http import as_int, json_body, send
+from ._http import as_bool, as_int, json_body, send
 from .base import (
     Connector,
     ConnectorContext,
@@ -34,6 +34,7 @@ FILE_FIELDS = (
 )
 PAGE_SIZE = 100
 MAX_PAGES = 10
+MAX_TEXT = 4000
 _TOKEN_CACHE = "google_access_token"
 
 
@@ -128,6 +129,13 @@ class GoogleConnector(Connector):
                     FieldSpec(name="query", label="Drive query",
                               help="Defaults to every Google Doc that is not in the bin."),
                     FieldSpec(name="limit", label="Limit", type="number", default=200),
+                    FieldSpec(
+                        name="include_content",
+                        label="Include content",
+                        type="boolean",
+                        default=True,
+                        help="Export each Google Doc as plain text (one request per doc).",
+                    ),
                 ],
             ),
         ],
@@ -216,6 +224,14 @@ class GoogleConnector(Connector):
             ctx, "POST", f"{DOCS}/documents/{document_id}:batchUpdate", json={"requests": requests}
         )
 
+    def _export_text(self, ctx: ConnectorContext, file_id: str) -> str:
+        headers = {"Authorization": f"Bearer {self._token(ctx)}"}
+        resp = send(
+            ctx, "google", "GET", f"{DRIVE}/files/{file_id}/export",
+            headers=headers, params={"mimeType": "text/plain"},
+        )
+        return resp.text
+
     @staticmethod
     def _doc_url(document_id: str) -> str:
         return f"https://docs.google.com/document/d/{document_id}/edit"
@@ -282,26 +298,24 @@ class GoogleConnector(Connector):
     def _op_sync_docs(self, params: dict[str, Any], ctx: ConnectorContext) -> OperationResult:
         limit = as_int(params.get("limit"), 200, 1, PAGE_SIZE * MAX_PAGES)
         query = params.get("query") or f"mimeType = '{DOC_MIME}' and trashed = false"
+        include_content = as_bool(params.get("include_content"), True)
         delta = GraphDelta()
         people: dict[str, NodeUpsert] = {}
         files = self._files(ctx, query, limit)
         for file in files:
             info = self._file(file)
             doc_key = entity_key("google", "file", info["id"])
-            delta.nodes.append(
-                NodeUpsert(
-                    label="Document",
-                    key=doc_key,
-                    props={
-                        "name": info["name"],
-                        "url": info["url"],
-                        "mime_type": info["mime_type"],
-                        "google_id": info["id"],
-                        "created_at": info["created_at"],
-                        "modified_at": info["modified_at"],
-                    },
-                )
-            )
+            props = {
+                "name": info["name"],
+                "url": info["url"],
+                "mime_type": info["mime_type"],
+                "google_id": info["id"],
+                "created_at": info["created_at"],
+                "modified_at": info["modified_at"],
+            }
+            if include_content and info["mime_type"] == DOC_MIME:
+                props[TEXT_PROP] = self._export_text(ctx, info["id"])[:MAX_TEXT]
+            delta.nodes.append(NodeUpsert(label="Document", key=doc_key, props=props))
             for owner in file.get("owners") or []:
                 email = owner.get("emailAddress")
                 external_id = owner.get("permissionId") or email

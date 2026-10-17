@@ -265,6 +265,11 @@ def test_sync_docs(ctx, respx_mock, delta_of):
         "files": [drive_file("a", owners=[ada]), drive_file("b", owners=[ada]),
                   drive_file("c")],  # shared-drive file: no owners
     })
+    export = respx_mock.get(url__regex=rf"{DRIVE}/files/(a|b|c)/export").mock(
+        side_effect=lambda request: httpx.Response(
+            200, text="Roadmap " + request.url.path.split("/")[-2] * 5000
+        )
+    )
     result = google.execute("sync_docs", {}, ctx)
 
     q = route.calls.last.request.url.params["q"]
@@ -275,6 +280,10 @@ def test_sync_docs(ctx, respx_mock, delta_of):
     assert doc.props["name"] == "Doc a"
     assert doc.props["url"] == "https://docs.google.com/document/d/a/edit"
     assert doc.props["modified_at"] == "2026-01-05T00:00:00Z"
+    assert doc.props["text"] == ("Roadmap " + "a" * 5000)[:4000]
+    assert export.call_count == 3
+    assert export.calls.last.request.url.params["mimeType"] == "text/plain"
+    assert export.calls.last.request.headers["authorization"] == "Bearer ya29.direct"
     assert delta.keys("Person") == ["email:ada@acme.com"]
     assert delta.node("Person", "email:ada@acme.com").props == {
         "name": "Ada Lovelace", "email": "Ada@Acme.com",
@@ -293,3 +302,10 @@ def test_sync_docs_with_custom_query(ctx, respx_mock):
     google.execute("sync_docs", {"query": "'folder1' in parents", "limit": 10}, ctx)
     params = route.calls.last.request.url.params
     assert params["q"] == "'folder1' in parents" and params["pageSize"] == "10"
+
+
+def test_sync_docs_without_content_skips_export(ctx, respx_mock, delta_of):
+    respx_mock.get(f"{DRIVE}/files").respond(json={"files": [drive_file("a")]})
+    result = google.execute("sync_docs", {"include_content": False}, ctx)
+    assert "text" not in delta_of(result.graph).node("Document", "google:file:a").props
+    assert len(respx_mock.calls) == 1

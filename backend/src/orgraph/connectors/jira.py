@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..graph.ontology import entity_key, person_key
+from ..graph.ontology import TEXT_PROP, entity_key, person_key
 from . import register
 from ._http import as_int, json_body, require, send
 from .base import (
@@ -30,7 +30,9 @@ ISSUE_FIELDS = [
     "project",
     "created",
     "updated",
+    "description",
 ]
+MAX_TEXT = 4000
 
 
 def to_adf(text: Any) -> dict[str, Any]:
@@ -43,6 +45,17 @@ def to_adf(text: Any) -> dict[str, Any]:
         content = [{"type": "text", "text": line}] if line else []
         paragraphs.append({"type": "paragraph", "content": content})
     return {"type": "doc", "version": 1, "content": paragraphs}
+
+
+def adf_text(value: Any) -> str:
+    """Plain text of an Atlassian Document Format value (or a plain string)."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return " ".join(t for t in (adf_text(v) for v in value) if t)
+    if isinstance(value, dict):
+        return " ".join(t for t in (value.get("text") or "", adf_text(value.get("content"))) if t)
+    return ""
 
 
 class JiraConnector(Connector):
@@ -376,6 +389,7 @@ class JiraConnector(Connector):
                         "priority": info["priority"],
                         "url": info["url"],
                         "created_at": info["created_at"],
+                        TEXT_PROP: adf_text(fields.get("description"))[:MAX_TEXT],
                     },
                 )
             )

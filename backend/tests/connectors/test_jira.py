@@ -26,7 +26,7 @@ def paragraph(text):
     return {"type": "paragraph", "content": [{"type": "text", "text": text}]}
 
 
-def raw_issue(key, assignee=None, reporter=None, project="ENG"):
+def raw_issue(key, assignee=None, reporter=None, project="ENG", description=None):
     return {
         "key": key,
         "fields": {
@@ -39,6 +39,7 @@ def raw_issue(key, assignee=None, reporter=None, project="ENG"):
             "project": {"key": project, "name": "Engineering", "projectTypeKey": "software"},
             "created": "2026-01-01T10:00:00.000+0000",
             "updated": "2026-01-02T10:00:00.000+0000",
+            "description": description,
         },
     }
 
@@ -242,19 +243,27 @@ def test_sync_projects_paginates(ctx, respx_mock, delta_of):
 def test_sync_issues_by_project(ctx, respx_mock, delta_of):
     route = respx_mock.post(f"{API}/search/jql").respond(json={
         "isLast": True,
-        "issues": [raw_issue("ENG-1", assignee=ADA, reporter=BOB),
-                   raw_issue("ENG-2", reporter=ADA)],
+        "issues": [raw_issue("ENG-1", assignee=ADA, reporter=BOB,
+                             description={"type": "doc", "content": [
+                                 paragraph("Steps to reproduce"),
+                                 {"type": "bulletList", "content": [
+                                     {"type": "listItem",
+                                      "content": [paragraph("Open the login page")]}]}]}),
+                   raw_issue("ENG-2", reporter=ADA, description="plain description")],
     })
     result = jira.execute("sync_issues", {"project": "ENG"}, ctx)
 
     sent = json.loads(route.calls.last.request.content)
     assert sent["jql"] == 'project = "ENG" ORDER BY updated DESC'
+    assert "description" in sent["fields"]
     delta = delta_of(result.graph)
     assert delta.keys("Ticket") == ["jira:issue:ENG-1", "jira:issue:ENG-2"]
     ticket = delta.node("Ticket", "jira:issue:ENG-1")
     assert ticket.props["name"] == "ENG-1: Summary ENG-1"
     assert ticket.props["state"] == "In Progress" and ticket.props["kind"] == "Bug"
     assert ticket.props["url"] == f"{SITE}/browse/ENG-1"
+    assert ticket.props["text"] == "Steps to reproduce Open the login page"
+    assert delta.node("Ticket", "jira:issue:ENG-2").props["text"] == "plain description"
     assert delta.keys("Project") == ["jira:project:ENG"]
     assert delta.keys("Person") == ["email:ada@acme.com", "jira:user:b2"]
     assert delta.edges("PART_OF") == [

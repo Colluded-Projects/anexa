@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..graph.ontology import entity_key, person_key
+from ..graph.ontology import TEXT_PROP, entity_key, person_key
 from . import register
 from ._http import as_bool, as_int, as_list, json_body, require, send
 from .base import (
@@ -23,6 +23,7 @@ PAGE_SIZE = 100
 MAX_PAGES = 10
 # Emails are only on the per-user profile, so resolving them costs one call each.
 MAX_PROFILE_LOOKUPS = 200
+MAX_TEXT = 4000
 
 _REPO = FieldSpec(
     name="repo",
@@ -415,6 +416,7 @@ class GitHubConnector(Connector):
                         "url": info["url"],
                         "created_at": info["created_at"],
                         "closed_at": issue.get("closed_at"),
+                        TEXT_PROP: (issue.get("body") or "")[:MAX_TEXT],
                     },
                 )
             )

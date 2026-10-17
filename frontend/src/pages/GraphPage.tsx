@@ -4,6 +4,8 @@ import {
   errorMessage,
   type GraphNode,
   type JsonObject,
+  type LinkResult,
+  type LinkScore,
   type Ontology,
 } from "../api";
 import { useWorkspace } from "../auth/AuthContext";
@@ -34,7 +36,7 @@ import { formatRelative } from "../lib/format";
 import { useAsync } from "../lib/hooks";
 import { parseJsonObject, prettyJson } from "../lib/json";
 
-type View = "map" | "list" | "query";
+type View = "map" | "list" | "query" | "linking";
 
 function LabelDot({ label, labels }: { label: string; labels: string[] }) {
   return (
@@ -414,6 +416,14 @@ function NodePanel({
                         >
                           {other?.name ?? otherId}
                         </button>
+                        {typeof edge.props.method === "string" && (
+                          <span
+                            className="shrink-0 rounded bg-accent-soft px-1 text-accent"
+                            title={typeof edge.props.evidence === "string" ? edge.props.evidence : undefined}
+                          >
+                            {edge.props.method} · {String(edge.props.confidence)}
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => void removeEdge(edge)}
@@ -575,6 +585,78 @@ export function CypherBox() {
   );
 }
 
+export function LinkingPanel({ onChange }: { onChange?: () => void }) {
+  const { api } = useWorkspace();
+  const [busy, setBusy] = useState<"demo" | "link" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<LinkResult | null>(null);
+  const [score, setScore] = useState<LinkScore | null>(null);
+
+  async function run(what: "demo" | "link") {
+    setBusy(what);
+    setError(null);
+    try {
+      if (what === "demo") {
+        const { loaded } = await api.graph.loadDemo();
+        setMessage(`Loaded demo company from ${Object.keys(loaded).join(", ")}.`);
+      } else {
+        setResult(await api.graph.link());
+      }
+      setScore(await api.graph.linkScore());
+      onChange?.();
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Note>
+        The linker connects what each connector wrote separately: the same person across systems,
+        items that reference or talk about each other, and decisions. The score compares the links
+        against the known-correct links of the demo company.
+      </Note>
+      <div className="flex gap-2">
+        <Button busy={busy === "demo"} onClick={() => void run("demo")}>
+          Load demo company
+        </Button>
+        <Button variant="primary" busy={busy === "link"} onClick={() => void run("link")}>
+          Run linker
+        </Button>
+      </div>
+      <ErrorNote message={error} />
+      {message && <p className="text-sm text-muted">{message}</p>}
+      {result && (
+        <div className="text-sm">
+          <p className="font-medium">Strategy: {result.strategy}</p>
+          <ul className="mt-1 flex flex-wrap gap-2 font-mono text-xs">
+            {Object.entries(result.links).map(([type, count]) => (
+              <li key={type}>{`${type}: ${count}`}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {score && (
+        <Table head={["Category", "Expected", "Found", "Correct", "Precision", "Recall"]}>
+          {Object.entries(score).map(([name, row]) => (
+            <tr key={name}>
+              <Td>{name}</Td>
+              <Td>{row.expected}</Td>
+              <Td>{row.found}</Td>
+              <Td>{row.correct}</Td>
+              <Td>{row.precision}</Td>
+              <Td>{row.recall}</Td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </div>
+  );
+}
+
 // --- page --------------------------------------------------------------------
 
 export function GraphPage() {
@@ -628,6 +710,7 @@ export function GraphPage() {
               ["map", "Map"],
               ["list", "List"],
               ["query", "Query"],
+              ["linking", "Linking"],
             ] as const
           ).map(([value, text]) => (
             <button
@@ -676,7 +759,9 @@ export function GraphPage() {
         )}
       </div>
 
-      {view === "query" ? (
+      {view === "linking" ? (
+        <LinkingPanel onChange={() => refresh()} />
+      ) : view === "query" ? (
         <CypherBox />
       ) : (
         <div className={cx("grid gap-5", selectedId && "lg:grid-cols-[minmax(0,1fr)_340px]")}>

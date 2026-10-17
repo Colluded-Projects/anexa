@@ -278,7 +278,7 @@ def test_sync_members_needs_an_org(make_ctx, respx_mock):
 
 def test_sync_issues(ctx, respx_mock, delta_of):
     route = respx_mock.get(f"{API}/repos/acme/api/issues").respond(json=[
-        issue(1, author="ada", assignees=["bob"], closed_at=None),
+        issue(1, author="ada", assignees=["bob"], closed_at=None, body="Login fails on Safari"),
         issue(2, author="ada", pull=True),
         issue(3, author="dependabot[bot]", user={"login": "dependabot[bot]", "type": "Bot"}),
     ])
@@ -301,6 +301,7 @@ def test_sync_issues(ctx, respx_mock, delta_of):
     assert ticket.props["name"] == "acme/api#1: Issue 1"
     assert ticket.props["kind"] == "issue" and ticket.props["labels"] == ["bug"]
     assert ticket.props["url"] == "https://github.com/acme/api/issues/1"
+    assert ticket.props["text"] == "Login fails on Safari"
     assert delta.node("Ticket", "github:issue:acme/api#2").props["kind"] == "pull_request"
     assert delta.keys("Person") == ["email:ada@acme.com", "github:user:bob"]
     assert delta.edges("PART_OF") == [

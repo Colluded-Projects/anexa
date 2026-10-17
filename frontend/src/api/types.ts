@@ -272,6 +272,21 @@ export interface Subgraph {
   edges: GraphEdge[];
 }
 
+export interface LinkResult {
+  strategy: string;
+  links: Record<string, number>;
+}
+
+export interface LinkScoreRow {
+  expected: number;
+  found: number;
+  correct: number;
+  precision: number;
+  recall: number;
+}
+
+export type LinkScore = Record<string, LinkScoreRow>;
+
 export interface GraphStats {
   nodes: Record<string, number>;
   total_nodes: number;

@@ -38,6 +38,7 @@ def test_spec_is_complete():
         "channel_history": "action",
         "sync_users": "sync",
         "sync_channels": "sync",
+        "sync_messages": "sync",
     }
 
 
@@ -276,3 +277,54 @@ def test_sync_channels_without_members_skips_user_and_member_calls(ctx, respx_mo
     result = slack.execute("sync_channels", {"include_members": False}, ctx)
     assert delta_of(result.graph).keys("Person") == []
     assert result.graph.edges == []
+
+
+def test_sync_messages_adds_text_authors_threads_and_mentions(ctx, respx_mock, delta_of):
+    respx_mock.get(f"{API}/auth.test").respond(json={"ok": True, "url": "https://acme.slack.com/"})
+    respx_mock.get(f"{API}/users.list").respond(json={
+        "ok": True, "members": [user("U1", "Ada@Acme.com"), user("U2")],
+    })
+    history = respx_mock.get(f"{API}/conversations.history").respond(json={
+        "ok": True,
+        "messages": [
+            {"ts": "1700000100.000200", "user": "U2", "text": "agreed <@U1>",
+             "thread_ts": "1700000000.000100"},
+            {"ts": "1700000000.000100", "user": "U1", "text": "ship it " + "x" * 5000,
+             "thread_ts": "1700000000.000100"},
+            {"ts": "1700000050.000000", "bot_id": "B1", "text": "deploy done"},
+        ],
+    })
+    result = slack.execute("sync_messages", {"channel": "C1"}, ctx)
+
+    params = history.calls.last.request.url.params
+    assert params["channel"] == "C1" and params["limit"] == "200"
+    delta = delta_of(result.graph)
+    first, reply = "slack:msg:C1:1700000000.000100", "slack:msg:C1:1700000100.000200"
+    assert delta.keys("Message") == [first, reply]
+    root = delta.node("Message", first)
+    assert root.props["text"] == ("ship it " + "x" * 5000)[:4000]
+    assert root.props["name"] == ("ship it " + "x" * 5000)[:80]
+    assert root.props["created_at"] == "2023-11-14T22:13:20+00:00"
+    assert root.props["url"] == "https://acme.slack.com/archives/C1/p1700000000000100"
+    assert delta.node("Message", reply).props["text"] == "agreed <@U1>"
+    assert delta.edges("AUTHORED") == [
+        ("Person", "email:ada@acme.com", "AUTHORED", "Message", first),
+        ("Person", "slack:user:U2", "AUTHORED", "Message", reply),
+    ]
+    assert delta.edges("POSTED_IN") == [
+        ("Message", first, "POSTED_IN", "Team", "slack:channel:C1"),
+        ("Message", reply, "POSTED_IN", "Team", "slack:channel:C1"),
+    ]
+    assert delta.edges("REPLY_TO") == [("Message", reply, "REPLY_TO", "Message", first)]
+    assert delta.edges("MENTIONS") == [
+        ("Message", reply, "MENTIONS", "Person", "email:ada@acme.com"),
+    ]
+    assert all(n.label in NODE_LABELS for n in result.graph.nodes)
+    assert all(e.type in EDGE_TYPES for e in result.graph.edges)
+    assert result.output == {"channel": "C1", "messages": 2}
+
+
+def test_sync_messages_requires_channel(ctx, respx_mock):
+    with pytest.raises(ConnectorError, match="channel"):
+        slack.execute("sync_messages", {}, ctx)
+    assert not respx_mock.calls

@@ -287,6 +287,12 @@ export interface LinkScoreRow {
 
 export type LinkScore = Record<string, LinkScoreRow>;
 
+export interface Expert {
+  name: string;
+  key: string;
+  score: number;
+}
+
 export interface GraphStats {
   nodes: Record<string, number>;
   total_nodes: number;

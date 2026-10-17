@@ -12,7 +12,7 @@ from typing import Any
 
 from ...store import Edge, GraphStore
 
-STRATEGY = "none"
+STRATEGY = "rules"
 
 
 def write_link(
@@ -34,4 +34,6 @@ def write_link(
 
 def link_graph(store: GraphStore, graph: str) -> dict[str, Any]:
     """Find and write links. Returns {"strategy": ..., "links": {edge type: count}}."""
-    return {"strategy": STRATEGY, "links": {}}
+    from .rules import link_rules  # rules imports write_link from here
+
+    return {"strategy": STRATEGY, "links": link_rules(store, graph)}

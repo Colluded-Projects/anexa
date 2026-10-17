@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from ...graph import demo
 from ...graph.evaluate import score
 from ...graph.linking import link_graph
+from ...graph.linking.rules import experts
 from ...graph.ontology import EDGE_TYPES, NODE_LABELS
 from ...models import new_id, utcnow
 from ...store import Edge, Node, StoreError
@@ -199,6 +200,12 @@ def link(ctx: WorkspaceDep) -> dict[str, Any]:
 def link_score(ctx: WorkspaceDep) -> dict[str, dict[str, float | int]]:
     """Precision/recall of the current links against the demo company's gold links."""
     return score(ctx.repos.store, ctx.graph)
+
+
+@router.get("/experts")
+def list_experts(ctx: WorkspaceDep, topic: str) -> list[dict[str, Any]]:
+    """People who know about a topic word, found by the linker."""
+    return experts(ctx.repos.store, ctx.graph, topic)
 
 
 @router.post("/query")

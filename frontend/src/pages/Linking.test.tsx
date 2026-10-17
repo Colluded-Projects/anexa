@@ -30,6 +30,25 @@ describe("LinkingPanel", () => {
     expect(await screen.findByRole("cell", { name: "same_person" })).toBeTruthy();
     expect(screen.getByRole("cell", { name: "0.75" })).toBeTruthy();
   });
+
+  it("lists who knows about a topic", async () => {
+    const api = mockApi({
+      [`GET ${BASE}/graph/experts`]: {
+        body: [
+          { name: "Ada Lovelace", key: "email:ada@acme.io", score: 5 },
+          { name: "Bob Stone", key: "email:bob@acme.io", score: 4 },
+        ],
+      },
+    });
+    renderInWorkspace(<LinkingPanel />);
+
+    fireEvent.change(screen.getByLabelText("Who knows about…"), { target: { value: "kafka" } });
+    fireEvent.click(screen.getByRole("button", { name: "Find experts" }));
+    await waitFor(() => expect(api.find("GET", `${BASE}/graph/experts`)).toHaveLength(1));
+    expect(api.find("GET", `${BASE}/graph/experts`)[0]?.url).toContain("topic=kafka");
+    expect(await screen.findByText("Ada Lovelace (5)")).toBeTruthy();
+    expect(screen.getByText("Bob Stone (4)")).toBeTruthy();
+  });
 });
 
 describe("GraphPage linker edges", () => {

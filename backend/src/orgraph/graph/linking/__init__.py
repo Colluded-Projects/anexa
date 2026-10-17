@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...config import get_settings
 from ...store import Edge, GraphStore
 
-STRATEGY = "none"
+STRATEGY = "hybrid"
 
 
 def write_link(
@@ -33,5 +34,11 @@ def write_link(
 
 
 def link_graph(store: GraphStore, graph: str) -> dict[str, Any]:
-    """Find and write links. Returns {"strategy": ..., "links": {edge type: count}}."""
-    return {"strategy": STRATEGY, "links": {}}
+    """Find and write links. Returns {"strategy": ..., "links": {edge type: count},
+    "llm": "on" | "off"}. Claude is only asked when settings.llm_enabled."""
+    from . import llm
+
+    if not get_settings().llm_enabled:
+        return {"strategy": STRATEGY, "links": {}, "llm": "off"}
+    links = llm.link_llm(store, graph, llm.ask_claude)
+    return {"strategy": STRATEGY, "links": links, "llm": "on"}

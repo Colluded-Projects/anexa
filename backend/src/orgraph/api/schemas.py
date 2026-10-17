@@ -321,6 +321,23 @@ class GraphEdgeOut(BaseModel):
     props: dict[str, Any]
 
 
+class LinkEdgeIn(BaseModel):
+    src: str
+    type: str
+    dst: str
+
+
+class LinkReviewOut(BaseModel):
+    src: str
+    src_name: str
+    type: str
+    dst: str
+    dst_name: str
+    method: str
+    confidence: float
+    evidence: str | None
+
+
 class GraphNodeDetail(GraphNodeOut):
     edges: list[GraphEdgeOut]
     neighbors: list[GraphNodeOut]

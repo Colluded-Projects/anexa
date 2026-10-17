@@ -275,6 +275,19 @@ export interface Subgraph {
 export interface LinkResult {
   strategy: string;
   links: Record<string, number>;
+  llm: "on" | "off";
+}
+
+/** A linker edge with low confidence, waiting for a human. */
+export interface LinkReviewRow {
+  src: string;
+  src_name: string;
+  type: string;
+  dst: string;
+  dst_name: string;
+  method: string;
+  confidence: number;
+  evidence: string | null;
 }
 
 export interface LinkScoreRow {

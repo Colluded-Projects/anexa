@@ -22,6 +22,8 @@ from ..schemas import (
     GraphQueryIn,
     GraphQueryOut,
     GraphStatsOut,
+    LinkEdgeIn,
+    LinkReviewOut,
     SubgraphOut,
 )
 
@@ -199,6 +201,49 @@ def link(ctx: WorkspaceDep) -> dict[str, Any]:
 def link_score(ctx: WorkspaceDep) -> dict[str, dict[str, float | int]]:
     """Precision/recall of the current links against the demo company's gold links."""
     return score(ctx.repos.store, ctx.graph)
+
+
+# Linker edges below this confidence wait for a human in the review queue.
+REVIEW_BELOW = 0.7
+
+
+@router.get("/link/review")
+def link_review(ctx: WorkspaceDep) -> list[LinkReviewOut]:
+    """Linker edges the linker was unsure about, least sure first."""
+    store = ctx.repos.store
+    name = {n.id: str(n.props.get("name") or "") for n in store.find_nodes(ctx.graph)}
+    unsure = [
+        e
+        for e in store.edges(ctx.graph)
+        if e.props.get("source") == "linker" and e.props["confidence"] < REVIEW_BELOW
+    ]
+    unsure.sort(key=lambda e: e.props["confidence"])
+    return [
+        LinkReviewOut(
+            src=e.src,
+            src_name=name[e.src],
+            type=e.type,
+            dst=e.dst,
+            dst_name=name[e.dst],
+            method=e.props["method"],
+            confidence=e.props["confidence"],
+            evidence=e.props.get("evidence"),
+        )
+        for e in unsure
+    ]
+
+
+@router.post("/link/review/accept")
+def link_accept(body: LinkEdgeIn, ctx: WorkspaceDep) -> GraphEdgeOut:
+    """A human confirmed this linker edge. Rejecting is DELETE /graph/edges."""
+    store = ctx.repos.store
+    found = [
+        e for e in store.edges(ctx.graph, body.src, body.type, "out") if e.dst == body.dst
+    ]
+    if not found:
+        raise HTTPException(404, "edge not found")
+    props = {"confidence": 1.0, "method": f"{found[0].props['method']}+human"}
+    return _edge_out(store.create_edge(ctx.graph, body.src, body.type, body.dst, props))
 
 
 @router.post("/query")

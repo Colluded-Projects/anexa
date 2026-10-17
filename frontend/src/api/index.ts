@@ -16,6 +16,7 @@ import type {
   GraphStats,
   JsonObject,
   LinkResult,
+  LinkReviewRow,
   LinkScore,
   Me,
   Member,
@@ -164,6 +165,9 @@ export function workspaceApi(workspaceId: string) {
         request<{ loaded: Record<string, JsonObject> }>(`${base}/graph/demo`, { method: "POST" }),
       link: () => request<LinkResult>(`${base}/graph/link`, { method: "POST" }),
       linkScore: () => request<LinkScore>(`${base}/graph/link/score`),
+      linkReview: () => request<LinkReviewRow[]>(`${base}/graph/link/review`),
+      acceptLink: (edge: { src: string; type: string; dst: string }) =>
+        request<GraphEdge>(`${base}/graph/link/review/accept`, { method: "POST", body: edge }),
       query: (cypher: string, params: JsonObject = {}) =>
         request<{ rows: JsonObject[] }>(`${base}/graph/query`, {
           method: "POST",

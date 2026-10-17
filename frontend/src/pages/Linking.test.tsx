@@ -13,8 +13,9 @@ describe("LinkingPanel", () => {
   it("loads the demo company, runs the linker and shows the score", async () => {
     const api = mockApi({
       [`POST ${BASE}/graph/demo`]: { status: 201, body: { loaded: { slack: { nodes: 10, edges: 5, skipped: 0 } } } },
-      [`POST ${BASE}/graph/link`]: { body: { strategy: "rules", links: { SAME_AS: 4, REFERENCES: 7 } } },
+      [`POST ${BASE}/graph/link`]: { body: { strategy: "rules", links: { SAME_AS: 4, REFERENCES: 7 }, llm: "off" } },
       [`GET ${BASE}/graph/link/score`]: { body: SCORE },
+      [`GET ${BASE}/graph/link/review`]: { body: [] },
     });
     renderInWorkspace(<LinkingPanel />);
 
@@ -26,9 +27,58 @@ describe("LinkingPanel", () => {
     await waitFor(() => expect(api.find("POST", `${BASE}/graph/link`)).toHaveLength(1));
     expect(await screen.findByText(/Strategy: rules/)).toBeTruthy();
     expect(screen.getByText("SAME_AS: 4")).toBeTruthy();
+    expect(screen.getByText("LLM: off")).toBeTruthy();
 
     expect(await screen.findByRole("cell", { name: "same_person" })).toBeTruthy();
     expect(screen.getByRole("cell", { name: "0.75" })).toBeTruthy();
+  });
+});
+
+const REVIEW = [
+  {
+    src: "n1", src_name: "login is slow", type: "RELATED_TO", dst: "n2", dst_name: "ENG-15",
+    method: "llm", confidence: 0.4, evidence: "rate limiting",
+  },
+  {
+    src: "n3", src_name: "Carol D.", type: "SAME_AS", dst: "n4", dst_name: "Carol Diaz",
+    method: "llm", confidence: 0.6, evidence: "same first name",
+  },
+];
+
+describe("LinkingPanel review", () => {
+  it("lists unsure links and accepts or rejects them", async () => {
+    let queue = REVIEW;
+    const api = mockApi({
+      [`POST ${BASE}/graph/link`]: { body: { strategy: "hybrid", links: { SAME_AS: 1 }, llm: "on" } },
+      [`GET ${BASE}/graph/link/score`]: { body: SCORE },
+      [`GET ${BASE}/graph/link/review`]: () => ({ body: queue }),
+      [`POST ${BASE}/graph/link/review/accept`]: (call) => {
+        queue = queue.filter((row) => row.src !== (call.body as { src: string }).src);
+        return { body: { src: "n1", type: "RELATED_TO", dst: "n2", props: {} } };
+      },
+      [`DELETE ${BASE}/graph/edges`]: (call) => {
+        queue = queue.filter((row) => !call.url.includes(`src=${row.src}`));
+        return { status: 204 };
+      },
+    });
+    renderInWorkspace(<LinkingPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Run linker" }));
+    expect(await screen.findByText("LLM: on")).toBeTruthy();
+    expect(await screen.findByText(/login is slow/)).toBeTruthy();
+    expect(screen.getByText("rate limiting")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Accept login is slow RELATED_TO ENG-15" }));
+    await waitFor(() => expect(api.find("POST", `${BASE}/graph/link/review/accept`)).toHaveLength(1));
+    expect(api.find("POST", `${BASE}/graph/link/review/accept`)[0]?.body).toEqual({
+      src: "n1", type: "RELATED_TO", dst: "n2",
+    });
+    await waitFor(() => expect(screen.queryByText(/login is slow/)).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "Reject Carol D. SAME_AS Carol Diaz" }));
+    await waitFor(() => expect(api.find("DELETE", `${BASE}/graph/edges`)).toHaveLength(1));
+    expect(api.find("DELETE", `${BASE}/graph/edges`)[0]?.url).toContain("type=SAME_AS");
+    expect(await screen.findByText("Nothing to review.")).toBeTruthy();
   });
 });
 

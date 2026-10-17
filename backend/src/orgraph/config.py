@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     api_url: str = "http://127.0.0.1:8000"
     api_key: str | None = None
 
+    # --- llm linker (Claude proposes links; needs ANTHROPIC_API_KEY) ---------
+    llm_enabled: bool = False
+    llm_model: str = "claude-opus-5"
+
     # --- placeholders for the future agent layer (unused by the platform) ----
     openrouter_api_key: str | None = None
     jev_api_key: str | None = None

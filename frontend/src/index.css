@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* Semantic colour tokens. Utilities such as bg-surface or text-muted read
+   these variables, so the dark theme only has to redefine them. */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --color-bg: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-sunken: #f1f1f3;
+  --color-line: #e3e3e8;
+  --color-line-strong: #c9c9d1;
+  --color-ink: #17171c;
+  --color-muted: #63636e;
+  --color-accent: #4338ca;
+  --color-accent-hover: #3730a3;
+  --color-accent-soft: #eeedfb;
+  --color-on-accent: #ffffff;
+  --color-ok: #15803d;
+  --color-ok-soft: #e7f5ec;
+  --color-warn: #a16207;
+  --color-warn-soft: #fbf3dc;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fbeaea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #101014;
+    --color-surface: #18181d;
+    --color-sunken: #121216;
+    --color-line: #2a2a32;
+    --color-line-strong: #3d3d48;
+    --color-ink: #ececf1;
+    --color-muted: #9c9caa;
+    --color-accent: #8f88f5;
+    --color-accent-hover: #a7a1f8;
+    --color-accent-soft: #24223f;
+    --color-on-accent: #101014;
+    --color-ok: #4ade80;
+    --color-ok-soft: #12291b;
+    --color-warn: #facc15;
+    --color-warn-soft: #2c2610;
+    --color-danger: #f87171;
+    --color-danger-soft: #331717;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"],
+  select,
+  summary {
+    cursor: pointer;
+  }
+  ::placeholder {
+    color: var(--color-muted);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

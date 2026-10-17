@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from ...graph import demo
 from ...graph.evaluate import score
 from ...graph.linking import link_graph
+from ...graph.linking.rules import experts
 from ...graph.ontology import EDGE_TYPES, NODE_LABELS
 from ...models import new_id, utcnow
 from ...store import Edge, Node, StoreError
@@ -244,6 +245,12 @@ def link_accept(body: LinkEdgeIn, ctx: WorkspaceDep) -> GraphEdgeOut:
         raise HTTPException(404, "edge not found")
     props = {"confidence": 1.0, "method": f"{found[0].props['method']}+human"}
     return _edge_out(store.create_edge(ctx.graph, body.src, body.type, body.dst, props))
+
+
+@router.get("/experts")
+def list_experts(ctx: WorkspaceDep, topic: str) -> list[dict[str, Any]]:
+    """People who know about a topic word, found by the linker."""
+    return experts(ctx.repos.store, ctx.graph, topic)
 
 
 @router.post("/query")

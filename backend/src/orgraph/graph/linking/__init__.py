@@ -34,11 +34,14 @@ def write_link(
 
 
 def link_graph(store: GraphStore, graph: str) -> dict[str, Any]:
-    """Find and write links. Returns {"strategy": ..., "links": {edge type: count},
-    "llm": "on" | "off"}. Claude is only asked when settings.llm_enabled."""
+    """Find and write links: rules first, then Claude when settings.llm_enabled.
+    Returns {"strategy": ..., "links": {edge type: count}, "llm": "on" | "off"}."""
     from . import llm
+    from .rules import link_rules  # both import write_link from here
 
+    links = link_rules(store, graph)
     if not get_settings().llm_enabled:
-        return {"strategy": STRATEGY, "links": {}, "llm": "off"}
-    links = llm.link_llm(store, graph, llm.ask_claude)
+        return {"strategy": STRATEGY, "links": links, "llm": "off"}
+    for type, count in llm.link_llm(store, graph, llm.ask_claude).items():
+        links[type] = links.get(type, 0) + count
     return {"strategy": STRATEGY, "links": links, "llm": "on"}

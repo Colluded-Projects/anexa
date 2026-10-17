@@ -155,8 +155,9 @@ def test_schema_requires_every_field():
 def test_link_graph_skips_llm_when_disabled(store, settings):
     demo.load(store, G)
     stats = link_graph(store, G)
-    assert stats == {"strategy": STRATEGY, "links": {}, "llm": "off"}
-    assert STRATEGY == "hybrid"
+    # Rules always run; Claude is skipped.
+    assert stats["strategy"] == STRATEGY == "hybrid" and stats["llm"] == "off"
+    assert stats["links"]["REFERENCES"] == 7
 
 
 def test_link_graph_uses_claude_when_enabled(store, monkeypatch):
@@ -167,7 +168,8 @@ def test_link_graph_uses_claude_when_enabled(store, monkeypatch):
     stats = link_graph(store, G)
     get_settings.cache_clear()
     assert stats["llm"] == "on"
-    assert stats["links"]["SAME_AS"] == 2
+    # 5 SAME_AS from the rules plus 2 written by the fake Claude (counts are writes).
+    assert stats["links"]["SAME_AS"] == 7
 
 
 def test_settings_defaults(settings):

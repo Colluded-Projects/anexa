@@ -10,6 +10,7 @@ import type {
   ConnectionInput,
   ConnectionTest,
   ConnectorSpec,
+  Expert,
   GraphEdge,
   GraphNode,
   GraphNodeDetail,
@@ -168,6 +169,7 @@ export function workspaceApi(workspaceId: string) {
       linkReview: () => request<LinkReviewRow[]>(`${base}/graph/link/review`),
       acceptLink: (edge: { src: string; type: string; dst: string }) =>
         request<GraphEdge>(`${base}/graph/link/review/accept`, { method: "POST", body: edge }),
+      experts: (topic: string) => request<Expert[]>(`${base}/graph/experts`, { query: { topic } }),
       query: (cypher: string, params: JsonObject = {}) =>
         request<{ rows: JsonObject[] }>(`${base}/graph/query`, {
           method: "POST",

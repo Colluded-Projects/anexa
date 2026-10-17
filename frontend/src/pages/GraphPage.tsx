@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   ApiError,
   errorMessage,
+  type Expert,
   type GraphNode,
   type JsonObject,
   type LinkResult,
@@ -609,6 +610,19 @@ export function LinkingPanel({ onChange }: { onChange?: () => void }) {
     }
   }
 
+  const [topic, setTopic] = useState("");
+  const [experts, setExperts] = useState<Expert[] | null>(null);
+
+  async function findExperts(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    try {
+      setExperts(await api.graph.experts(topic.trim()));
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
   async function run(what: "demo" | "link") {
     setBusy(what);
     setError(null);
@@ -701,6 +715,27 @@ export function LinkingPanel({ onChange }: { onChange?: () => void }) {
             </ul>
           )}
         </div>
+      )}
+      <form onSubmit={findExperts} className="flex items-end gap-2">
+        <Field label="Who knows about…" htmlFor="expert-topic">
+          <Input
+            id="expert-topic"
+            placeholder="kafka"
+            value={topic}
+            onChange={(event) => setTopic(event.target.value)}
+          />
+        </Field>
+        <Button type="submit" disabled={!topic.trim()}>
+          Find experts
+        </Button>
+      </form>
+      {experts && (
+        <ul className="text-sm">
+          {experts.length === 0 && <li className="text-muted">Nobody yet.</li>}
+          {experts.map((expert) => (
+            <li key={expert.key}>{`${expert.name} (${expert.score})`}</li>
+          ))}
+        </ul>
       )}
     </div>
   );

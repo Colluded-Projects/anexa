@@ -1,13 +1,33 @@
+# Python
 __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
 .ruff_cache/
 .coverage
+coverage.xml
 htmlcov/
+
+# Node
 node_modules/
 dist/
+
+# Secrets and local config
 .env
+.env.*
+!.env.example
 *.local
-celerybeat-schedule*
+.mcp.json
+.claude/settings.local.json
+
+# Local data (dev FalkorDB, Celery beat)
 .orgraph/
+celerybeat-schedule*
+dump.rdb
+*.db
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+*.log

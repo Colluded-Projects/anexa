@@ -8,6 +8,14 @@ web UI or from Claude Code over MCP.
 No AI runs inside the platform yet. Agents can be defined and linked to actions and operators, but
 they are empty shells with no runtime behind them.
 
+## Branches
+
+| Branch | Holds |
+|---|---|
+| `main` | Shared base: connectors store text (Slack messages, ticket bodies, doc content), a fake demo company with known-correct links, a precision/recall scorer, and the Graph → Linking tab. No linker yet. |
+| `rules-only` | Linking without AI: email/name matching for people, regex for ticket keys and URLs, keyword overlap for related items, phrase rules for decisions, and "who knows what" experts. |
+| `hybrid` | The same rules, then an LLM proposes extra links. Code checks every proposal before writing it. Unsure links go to a review queue. |
+
 ## Vocabulary
 
 | Thing | Meaning |

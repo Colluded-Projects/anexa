@@ -6,7 +6,8 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ...graph import demo
 from ...graph.evaluate import score
-from ...graph.linking import link_graph
+from ...graph.linking import link_graph, llm
+from ...graph.linking.rules import experts
 from ...graph.ontology import EDGE_TYPES, NODE_LABELS
 from ...models import new_id, utcnow
 from ...store import Edge, Node, StoreError
@@ -22,6 +23,9 @@ from ..schemas import (
     GraphQueryIn,
     GraphQueryOut,
     GraphStatsOut,
+    LinkEdgeIn,
+    LinkProposalsIn,
+    LinkReviewOut,
     SubgraphOut,
 )
 
@@ -195,10 +199,76 @@ def link(ctx: WorkspaceDep) -> dict[str, Any]:
     return link_graph(ctx.repos.store, ctx.graph)
 
 
+@router.get("/link/prompt")
+def link_prompt(ctx: WorkspaceDep) -> dict[str, Any]:
+    """The catalog the LLM linker reads, for a model outside the platform
+    (Claude Code over MCP) to answer with POST /link/proposals."""
+    nodes, prompt = llm.catalog(ctx.repos.store, ctx.graph)
+    return {"prompt": prompt, "nodes": len(nodes), "schema": llm.SCHEMA}
+
+
+@router.post("/link/proposals")
+def link_proposals(body: LinkProposalsIn, ctx: WorkspaceDep) -> dict[str, Any]:
+    """Validate proposed links with the same checks as the LLM linker and write
+    the ones that pass. Unsure ones show up in the review queue."""
+    nodes, _ = llm.catalog(ctx.repos.store, ctx.graph)
+    written = llm.apply_answer(ctx.repos.store, ctx.graph, nodes, body.model_dump())
+    return {"links": written}
+
+
 @router.get("/link/score")
 def link_score(ctx: WorkspaceDep) -> dict[str, dict[str, float | int]]:
     """Precision/recall of the current links against the demo company's gold links."""
     return score(ctx.repos.store, ctx.graph)
+
+
+# Linker edges below this confidence wait for a human in the review queue.
+REVIEW_BELOW = 0.7
+
+
+@router.get("/link/review")
+def link_review(ctx: WorkspaceDep) -> list[LinkReviewOut]:
+    """Linker edges the linker was unsure about, least sure first."""
+    store = ctx.repos.store
+    name = {n.id: str(n.props.get("name") or "") for n in store.find_nodes(ctx.graph)}
+    unsure = [
+        e
+        for e in store.edges(ctx.graph)
+        if e.props.get("source") == "linker" and e.props["confidence"] < REVIEW_BELOW
+    ]
+    unsure.sort(key=lambda e: e.props["confidence"])
+    return [
+        LinkReviewOut(
+            src=e.src,
+            src_name=name[e.src],
+            type=e.type,
+            dst=e.dst,
+            dst_name=name[e.dst],
+            method=e.props["method"],
+            confidence=e.props["confidence"],
+            evidence=e.props.get("evidence"),
+        )
+        for e in unsure
+    ]
+
+
+@router.post("/link/review/accept")
+def link_accept(body: LinkEdgeIn, ctx: WorkspaceDep) -> GraphEdgeOut:
+    """A human confirmed this linker edge. Rejecting is DELETE /graph/edges."""
+    store = ctx.repos.store
+    found = [
+        e for e in store.edges(ctx.graph, body.src, body.type, "out") if e.dst == body.dst
+    ]
+    if not found:
+        raise HTTPException(404, "edge not found")
+    props = {"confidence": 1.0, "method": f"{found[0].props['method']}+human"}
+    return _edge_out(store.create_edge(ctx.graph, body.src, body.type, body.dst, props))
+
+
+@router.get("/experts")
+def list_experts(ctx: WorkspaceDep, topic: str) -> list[dict[str, Any]]:
+    """People who know about a topic word, found by the linker."""
+    return experts(ctx.repos.store, ctx.graph, topic)
 
 
 @router.post("/query")

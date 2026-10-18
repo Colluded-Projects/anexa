@@ -2,9 +2,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   ApiError,
   errorMessage,
+  type Expert,
   type GraphNode,
   type JsonObject,
   type LinkResult,
+  type LinkReviewRow,
   type LinkScore,
   type Ontology,
 } from "../api";
@@ -592,6 +594,34 @@ export function LinkingPanel({ onChange }: { onChange?: () => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<LinkResult | null>(null);
   const [score, setScore] = useState<LinkScore | null>(null);
+  const [review, setReview] = useState<LinkReviewRow[] | null>(null);
+
+  async function decide(row: LinkReviewRow, accept: boolean) {
+    setError(null);
+    const edge = { src: row.src, type: row.type, dst: row.dst };
+    try {
+      if (accept) await api.graph.acceptLink(edge);
+      else await api.graph.removeEdge(edge);
+      setReview(await api.graph.linkReview());
+      setScore(await api.graph.linkScore());
+      onChange?.();
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  const [topic, setTopic] = useState("");
+  const [experts, setExperts] = useState<Expert[] | null>(null);
+
+  async function findExperts(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    try {
+      setExperts(await api.graph.experts(topic.trim()));
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
 
   async function run(what: "demo" | "link") {
     setBusy(what);
@@ -604,6 +634,7 @@ export function LinkingPanel({ onChange }: { onChange?: () => void }) {
         setResult(await api.graph.link());
       }
       setScore(await api.graph.linkScore());
+      setReview(await api.graph.linkReview());
       onChange?.();
     } catch (cause) {
       setError(errorMessage(cause));
@@ -632,6 +663,7 @@ export function LinkingPanel({ onChange }: { onChange?: () => void }) {
       {result && (
         <div className="text-sm">
           <p className="font-medium">Strategy: {result.strategy}</p>
+          <p className="text-muted">{`LLM: ${result.llm}`}</p>
           <ul className="mt-1 flex flex-wrap gap-2 font-mono text-xs">
             {Object.entries(result.links).map(([type, count]) => (
               <li key={type}>{`${type}: ${count}`}</li>
@@ -652,6 +684,58 @@ export function LinkingPanel({ onChange }: { onChange?: () => void }) {
             </tr>
           ))}
         </Table>
+      )}
+      {review && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Review</h3>
+          {review.length === 0 ? (
+            <p className="text-sm text-muted">Nothing to review.</p>
+          ) : (
+            <ul className="space-y-2">
+              {review.map((row) => {
+                const label = `${row.src_name} ${row.type} ${row.dst_name}`;
+                return (
+                  <li key={`${row.src}-${row.type}-${row.dst}`} className="flex items-start gap-3 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p>
+                        {row.src_name} <span className="font-mono text-xs">{row.type}</span> {row.dst_name}
+                      </p>
+                      <p className="text-xs text-muted">{`${row.method} · ${row.confidence}`}</p>
+                      {row.evidence && <p className="text-xs text-muted">{row.evidence}</p>}
+                    </div>
+                    <Button aria-label={`Accept ${label}`} onClick={() => void decide(row, true)}>
+                      Accept
+                    </Button>
+                    <Button aria-label={`Reject ${label}`} onClick={() => void decide(row, false)}>
+                      Reject
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+      <form onSubmit={findExperts} className="flex items-end gap-2">
+        <Field label="Who knows about…" htmlFor="expert-topic">
+          <Input
+            id="expert-topic"
+            placeholder="kafka"
+            value={topic}
+            onChange={(event) => setTopic(event.target.value)}
+          />
+        </Field>
+        <Button type="submit" disabled={!topic.trim()}>
+          Find experts
+        </Button>
+      </form>
+      {experts && (
+        <ul className="text-sm">
+          {experts.length === 0 && <li className="text-muted">Nobody yet.</li>}
+          {experts.map((expert) => (
+            <li key={expert.key}>{`${expert.name} (${expert.score})`}</li>
+          ))}
+        </ul>
       )}
     </div>
   );

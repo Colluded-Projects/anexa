@@ -1,8 +1,8 @@
 """The shared ground every linking strategy is scored on."""
 
-from orgraph.graph import demo
-from orgraph.graph.evaluate import score
-from orgraph.graph.linking import STRATEGY, link_graph, write_link
+from anexa.graph import demo
+from anexa.graph.evaluate import score
+from anexa.graph.linking import STRATEGY, link_graph, write_link
 
 G = "ws_demo"
 

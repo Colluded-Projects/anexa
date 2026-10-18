@@ -14,7 +14,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from .client import ApiClient, ApiError
 
 INSTRUCTIONS = """\
-Orgraph orchestrates work across a company's tools and keeps a graph of its \
+Anexa orchestrates work across a company's tools and keeps a graph of its \
 people, teams, projects, documents, tickets and decisions.
 
 Model: a Connection holds credentials for one connector (slack, github, jira, \
@@ -51,7 +51,7 @@ def build_server(
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.monotonic,
 ) -> MCPServer:
-    mcp = MCPServer("orgraph", instructions=INSTRUCTIONS)
+    mcp = MCPServer("anexa", instructions=INSTRUCTIONS)
 
     def tool(fn: Callable[..., Any]) -> Callable[..., Any]:
         """Register `fn` as a tool. API failures become ToolErrors so the model
@@ -459,6 +459,28 @@ def build_server(
         return client.ws("POST", "/graph/edges", json=body)
 
     @tool
+    def graph_link_prompt() -> dict[str, Any]:
+        """Get the linker's catalog of people, messages, tickets and documents with
+        instructions. You are the linker model: read it, then send your answer with
+        graph_submit_links. Keys must come from the catalog."""
+        return client.ws("GET", "/graph/link/prompt")
+
+    @tool
+    def graph_submit_links(
+        same_person: list[dict[str, Any]] | None = None,
+        related: list[dict[str, Any]] | None = None,
+        decisions: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Submit links you found from graph_link_prompt. Shapes:
+        same_person {a, b, reason, confidence}; related {a, b, quote, confidence} where
+        quote is copied word for word from a or b; decisions {source, summary, quote,
+        decided_by: [person keys], affects: [keys], confidence}. The server drops any
+        proposal that fails validation; confidence below 0.7 goes to the review queue."""
+        body = {"same_person": same_person or [], "related": related or [],
+                "decisions": decisions or []}
+        return client.ws("POST", "/graph/link/proposals", json=body)
+
+    @tool
     def graph_query(cypher: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Run read-only Cypher against the workspace's company graph (FalkorDB)
         and return {rows}. Nodes carry key, name, source and url properties.
@@ -471,8 +493,8 @@ def build_server(
 
 
 def main() -> None:
-    """Entry point for `orgraph-mcp` (stdio transport)."""
-    timeout = float(os.environ.get("ORGRAPH_MCP_WAIT_TIMEOUT", "60"))
+    """Entry point for `anexa-mcp` (stdio transport)."""
+    timeout = float(os.environ.get("ANEXA_MCP_WAIT_TIMEOUT", "60"))
     build_server(ApiClient(), wait_timeout=timeout).run()
 
 

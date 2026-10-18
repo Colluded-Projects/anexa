@@ -1,4 +1,4 @@
-# Orgraph REST API
+# Anexa REST API
 
 Base URL `http://127.0.0.1:8000`. All bodies are JSON. Timestamps are UTC ISO-8601 strings.
 
@@ -18,13 +18,13 @@ Base URL `http://127.0.0.1:8000`. All bodies are JSON. Timestamps are UTC ISO-86
 Send one of:
 
 - `Authorization: Bearer <access_token>` — from signup/login, used by the UI.
-- `X-API-Key: ogk_...` — a workspace API key, used by the MCP server. Acts as the user who
+- `X-API-Key: axk_...` — a workspace API key, used by the MCP server. Acts as the user who
   created it, limited to that one workspace.
 
 ## MCP
 
 `POST /mcp` is the MCP streamable-HTTP endpoint (stateless, JSON responses). It requires
-`Authorization: Bearer ogk_...` with a workspace API key and answers 401 otherwise; login tokens are
+`Authorization: Bearer axk_...` with a workspace API key and answers 401 otherwise; login tokens are
 not accepted. Its tools call this API as that key.
 
 ## Errors
@@ -249,6 +249,14 @@ Each workspace has its own graph of people, teams, projects, documents, tickets 
 | DELETE | `/graph/edges` | `?src=&type=&dst=` | 204 |
 | GET | `/graph/subgraph` | `?label=&limit=` (default 200, max 1000) | `{nodes: [GraphNode], edges: [GraphEdge]}` |
 | POST | `/graph/query` | `{cypher, params?}` | `{rows: [object]}` |
+| POST | `/graph/demo` | | 201 `{loaded}`: writes the fake demo company |
+| POST | `/graph/link` | | `{strategy, links: {edge type: count}, llm: "on" \| "off"}` |
+| GET | `/graph/link/score` | | precision/recall per category against the demo company's gold links |
+| GET | `/graph/link/review` | | `[LinkReview]`, linker edges under 0.7 confidence, least sure first |
+| POST | `/graph/link/review/accept` | `{src, type, dst}` | `GraphEdge` with confidence 1.0 |
+| GET | `/graph/link/prompt` | | `{prompt, nodes, schema}` for an outside model (Claude Code) |
+| POST | `/graph/link/proposals` | `{same_person?, related?, decisions?}` | `{links: {edge type: count}}`, only proposals that pass validation |
+| GET | `/graph/experts` | `?topic=` | people who know about a topic |
 
 ```
 GraphNode {id, label, name, key, source, url, props, updated_at}

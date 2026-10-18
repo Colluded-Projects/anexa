@@ -1,5 +1,5 @@
-from orgraph.connectors import EdgeUpsert, GraphDelta, NodeUpsert
-from orgraph.graph.ingest import apply_delta
+from anexa.connectors import EdgeUpsert, GraphDelta, NodeUpsert
+from anexa.graph.ingest import apply_delta
 
 G = "company_test"
 

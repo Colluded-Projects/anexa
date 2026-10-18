@@ -1,15 +1,15 @@
 import os
 
-# Must be set before orgraph.config is imported anywhere.
-os.environ["ORGRAPH_STORE_BACKEND"] = "memory"
-os.environ["ORGRAPH_CELERY_EAGER"] = "true"
-os.environ["ORGRAPH_SECRET_KEY"] = "test-secret-key-that-is-long-enough-for-hs256"
+# Must be set before anexa.config is imported anywhere.
+os.environ["ANEXA_STORE_BACKEND"] = "memory"
+os.environ["ANEXA_CELERY_EAGER"] = "true"
+os.environ["ANEXA_SECRET_KEY"] = "test-secret-key-that-is-long-enough-for-hs256"
 
 import pytest
 
-from orgraph.config import get_settings
-from orgraph.repos import Repos
-from orgraph.store import MemoryStore, set_store
+from anexa.config import get_settings
+from anexa.repos import Repos
+from anexa.store import MemoryStore, set_store
 
 
 @pytest.fixture
@@ -25,15 +25,15 @@ def _lite_client():
 
     from redislite.falkordb_client import FalkorDB
 
-    return FalkorDB(os.path.join(tempfile.mkdtemp(prefix="orgraph-test-"), "test.db"))
+    return FalkorDB(os.path.join(tempfile.mkdtemp(prefix="anexa-test-"), "test.db"))
 
 
 @pytest.fixture
 def store(settings, request):
     """A fresh store installed as the process-wide store: in-memory by default,
-    a real embedded FalkorDB when ORGRAPH_TEST_FALKOR_LITE=1."""
-    if os.environ.get("ORGRAPH_TEST_FALKOR_LITE"):
-        from orgraph.store.falkor import FalkorStore
+    a real embedded FalkorDB when ANEXA_TEST_FALKOR_LITE=1."""
+    if os.environ.get("ANEXA_TEST_FALKOR_LITE"):
+        from anexa.store.falkor import FalkorStore
 
         client = request.getfixturevalue("_lite_client")
         store = FalkorStore(client)

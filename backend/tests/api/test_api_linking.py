@@ -1,5 +1,5 @@
-from orgraph.graph.demo import GOLD
-from orgraph.graph.linking import STRATEGY
+from anexa.graph.demo import GOLD
+from anexa.graph.linking import STRATEGY
 
 
 def test_demo_link_and_score(client, ada):
@@ -17,6 +17,19 @@ def test_demo_link_and_score(client, ada):
     result = client.get(f"{base}/link/score", headers=h).json()
     assert set(result) == set(GOLD)
     assert {"precision", "recall", "expected", "found", "correct"} <= set(result["references"])
+
+
+def test_experts_by_topic(client, ada):
+    base, h = f"{ada.base}/graph", ada.headers
+    client.post(f"{base}/demo", headers=h)
+    client.post(f"{base}/link", headers=h)
+
+    found = client.get(f"{base}/experts", params={"topic": "kafka"}, headers=h)
+    assert found.status_code == 200
+    names = [e["name"] for e in found.json()]
+    assert "Ada Lovelace" in names and "Bob Stone" in names
+    assert {"name", "key", "score"} == set(found.json()[0])
+    assert client.get(f"{base}/experts", params={"topic": "nope"}, headers=h).json() == []
 
 
 def test_linking_is_per_workspace(client, ada, bob):

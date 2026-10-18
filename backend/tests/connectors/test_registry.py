@@ -1,7 +1,7 @@
 import pytest
 
-from orgraph.connectors import ConnectorError, all_specs, get_connector
-from orgraph.graph.ontology import EDGE_TYPES, NODE_LABELS  # noqa: F401
+from anexa.connectors import ConnectorError, all_specs, get_connector
+from anexa.graph.ontology import EDGE_TYPES, NODE_LABELS  # noqa: F401
 
 BUILTIN = ["agent", "github", "google", "jira", "slack"]
 

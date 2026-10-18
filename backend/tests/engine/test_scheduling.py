@@ -2,8 +2,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from orgraph.models import utcnow
-from orgraph.scheduling import next_fire, validate_schedule
+from anexa.models import utcnow
+from anexa.scheduling import next_fire, validate_schedule
 
 NOON = datetime(2026, 1, 5, 12, 0, tzinfo=UTC)  # a Monday
 

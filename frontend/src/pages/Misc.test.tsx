@@ -230,7 +230,7 @@ describe("SettingsPage", () => {
       [`GET ${BASE}/api-keys`]: { body: [] },
       [`POST ${BASE}/api-keys`]: {
         status: 201,
-        body: { id: "k1", name: "Laptop", prefix: "ogk_abc12345", created_at: "", last_used_at: null, key: "ogk_abc12345_full_secret" },
+        body: { id: "k1", name: "Laptop", prefix: "axk_abc12345", created_at: "", last_used_at: null, key: "axk_abc12345_full_secret" },
       },
     });
     renderInWorkspace(<SettingsPage />);
@@ -242,13 +242,13 @@ describe("SettingsPage", () => {
 
     expect(await screen.findByText(/It will not be shown again/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Copy key" }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith("ogk_abc12345_full_secret"));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("axk_abc12345_full_secret"));
 
     const config = JSON.parse(screen.getByLabelText("MCP configuration").textContent ?? "");
-    expect(config.mcpServers.orgraph).toEqual({
+    expect(config.mcpServers.anexa).toEqual({
       type: "http",
       url: `${window.location.origin}/mcp`,
-      headers: { Authorization: "Bearer ogk_abc12345_full_secret" },
+      headers: { Authorization: "Bearer axk_abc12345_full_secret" },
     });
   });
 
@@ -260,7 +260,7 @@ describe("SettingsPage", () => {
       [`GET ${BASE}/api-keys`]: { body: [] },
       [`POST ${BASE}/api-keys`]: {
         status: 201,
-        body: { id: "k9", name: "Claude Code (MCP)", prefix: "ogk_gen", created_at: "", last_used_at: null, key: "ogk_generated_secret" },
+        body: { id: "k9", name: "Claude Code (MCP)", prefix: "axk_gen", created_at: "", last_used_at: null, key: "axk_generated_secret" },
       },
     });
     renderInWorkspace(<SettingsPage />);
@@ -276,10 +276,10 @@ describe("SettingsPage", () => {
     expect(await screen.findByText(/the key is not shown again/)).toBeTruthy();
     expect(api.calls.find((c) => c.method === "POST")?.body).toEqual({ name: "Claude Code (MCP)" });
     const text = screen.getByLabelText("MCP configuration").textContent ?? "";
-    expect(JSON.parse(text).mcpServers.orgraph).toEqual({
+    expect(JSON.parse(text).mcpServers.anexa).toEqual({
       type: "http",
       url: "http://box:8000/mcp",
-      headers: { Authorization: "Bearer ogk_generated_secret" },
+      headers: { Authorization: "Bearer axk_generated_secret" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Copy config" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(text));
@@ -316,16 +316,16 @@ describe("SettingsPage", () => {
 
 describe("mcpConfig", () => {
   it("is valid JSON carrying the key as a bearer token", () => {
-    expect(JSON.parse(mcpConfig("http://x:1/mcp", "ogk_k")).mcpServers.orgraph).toEqual({
+    expect(JSON.parse(mcpConfig("http://x:1/mcp", "axk_k")).mcpServers.anexa).toEqual({
       type: "http",
       url: "http://x:1/mcp",
-      headers: { Authorization: "Bearer ogk_k" },
+      headers: { Authorization: "Bearer axk_k" },
     });
   });
 
   it("offers a local stdio variant with the documented command", () => {
-    const server = JSON.parse(mcpStdioConfig("http://x:1", "ogk_k")).mcpServers.orgraph;
-    expect(server.args).toEqual(["run", "--directory", "<repo>/backend", "orgraph-mcp"]);
-    expect(server.env).toEqual({ ORGRAPH_API_URL: "http://x:1", ORGRAPH_API_KEY: "ogk_k" });
+    const server = JSON.parse(mcpStdioConfig("http://x:1", "axk_k")).mcpServers.anexa;
+    expect(server.args).toEqual(["run", "--directory", "<repo>/backend", "anexa-mcp"]);
+    expect(server.env).toEqual({ ANEXA_API_URL: "http://x:1", ANEXA_API_KEY: "axk_k" });
   });
 });

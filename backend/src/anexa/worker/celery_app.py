@@ -1,7 +1,7 @@
 """Celery application.
 
-worker:  celery -A orgraph.worker.celery_app worker --loglevel=info
-beat:    celery -A orgraph.worker.celery_app beat --loglevel=info
+worker:  celery -A anexa.worker.celery_app worker --loglevel=info
+beat:    celery -A anexa.worker.celery_app beat --loglevel=info
 """
 
 from __future__ import annotations
@@ -13,10 +13,10 @@ from ..config import get_settings
 settings = get_settings()
 
 celery_app = Celery(
-    "orgraph",
+    "anexa",
     broker=settings.redis_url,
     backend=settings.celery_result_backend,
-    include=["orgraph.worker.tasks"],
+    include=["anexa.worker.tasks"],
 )
 
 celery_app.conf.update(
@@ -36,7 +36,7 @@ celery_app.conf.update(
     broker_connection_retry_on_startup=True,
     beat_schedule={
         "scheduler-tick": {
-            "task": "orgraph.scheduler_tick",
+            "task": "anexa.scheduler_tick",
             "schedule": float(settings.scheduler_tick_seconds),
             # A tick that waited longer than one interval is stale; the next one covers it.
             "options": {"expires": float(settings.scheduler_tick_seconds)},

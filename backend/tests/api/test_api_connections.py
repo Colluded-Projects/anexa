@@ -1,4 +1,4 @@
-from orgraph.security import decrypt_secrets
+from anexa.security import decrypt_secrets
 
 
 def test_catalog_lists_connector_specs(client, ada):

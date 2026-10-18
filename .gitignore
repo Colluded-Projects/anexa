@@ -21,7 +21,7 @@ dist/
 .claude/settings.local.json
 
 # Local data (dev FalkorDB, Celery beat)
-.orgraph/
+.anexa/
 celerybeat-schedule*
 dump.rdb
 *.db
@@ -31,3 +31,6 @@ dump.rdb
 .vscode/
 .DS_Store
 *.log
+
+# Hackathon submission material (real data, drafts, media)
+submission/

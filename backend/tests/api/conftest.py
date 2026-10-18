@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-import orgraph.connectors as connectors
-from orgraph.connectors.base import (
+import anexa.connectors as connectors
+from anexa.connectors.base import (
     Connector,
     ConnectorError,
     ConnectorSpec,
@@ -12,8 +12,8 @@ from orgraph.connectors.base import (
     OperationResult,
     OperationSpec,
 )
-from orgraph.engine import dispatch
-from orgraph.models import Run
+from anexa.engine import dispatch
+from anexa.models import Run
 
 GOOD_TOKEN = "xoxb-super-secret-token-value"
 
@@ -84,7 +84,7 @@ def client(store, settings, submitted, monkeypatch):
     monkeypatch.setattr(connectors, "_registry", {})
     monkeypatch.setattr(connectors, "_loaded", True)
     connectors.register(FakeConnector())
-    from orgraph.api.main import create_app
+    from anexa.api.main import create_app
 
     with TestClient(create_app()) as c:
         yield c

@@ -1,4 +1,4 @@
-"""HTTP client for the Orgraph REST API (docs/api.md), authenticated with a
+"""HTTP client for the Anexa REST API (docs/api.md), authenticated with a
 workspace API key. The MCP server only ever talks to the platform through this."""
 
 from __future__ import annotations
@@ -16,15 +16,15 @@ class ApiError(Exception):
 
     def __init__(self, status: int, detail: str) -> None:
         self.status, self.detail = status, detail
-        super().__init__(f"Orgraph API error {status}: {detail}" if status else detail)
+        super().__init__(f"Anexa API error {status}: {detail}" if status else detail)
 
 
 class MissingApiKey(ApiError):
     def __init__(self) -> None:
         super().__init__(
             0,
-            "No Orgraph API key configured. Create one in the Orgraph UI under "
-            "Settings → API keys and set it as ORGRAPH_API_KEY for this MCP server.",
+            "No Anexa API key configured. Create one in the Anexa UI under "
+            "Settings → API keys and set it as ANEXA_API_KEY for this MCP server.",
         )
 
 
@@ -87,7 +87,7 @@ class ApiClient:
             )
         except httpx.HTTPError as exc:
             raise ApiError(
-                0, f"Cannot reach the Orgraph API at {self.base_url}: {exc or type(exc).__name__}"
+                0, f"Cannot reach the Anexa API at {self.base_url}: {exc or type(exc).__name__}"
             ) from exc
         if not response.is_success:
             raise ApiError(response.status_code, _detail(response))

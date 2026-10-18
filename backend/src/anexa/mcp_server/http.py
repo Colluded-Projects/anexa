@@ -2,8 +2,8 @@
 
 Clients authenticate with a workspace API key as a bearer token:
 
-    {"mcpServers": {"orgraph": {"type": "http", "url": "http://localhost:8000/mcp",
-                                "headers": {"Authorization": "Bearer ogk_..."}}}}
+    {"mcpServers": {"anexa": {"type": "http", "url": "http://localhost:8000/mcp",
+                                "headers": {"Authorization": "Bearer axk_..."}}}}
 
 One MCP server is shared by every caller; each request's key selects the
 ApiClient its tools use, so a tool can only ever act as the key that called it.
@@ -32,7 +32,7 @@ from .server import build_server
 MCP_PATH = "/mcp"
 _MAX_CLIENTS = 256
 
-_current_key: ContextVar[str | None] = ContextVar("orgraph_mcp_api_key", default=None)
+_current_key: ContextVar[str | None] = ContextVar("anexa_mcp_api_key", default=None)
 
 
 class KeyScopedClient:
@@ -97,7 +97,7 @@ class BearerGate:
             return
         key = _bearer(scope)
         if not key:
-            await self._reject(send, "Send a workspace API key as 'Authorization: Bearer ogk_...'.")
+            await self._reject(send, "Send a workspace API key as 'Authorization: Bearer axk_...'.")
             return
         if not key.startswith(API_KEY_PREFIX) or not await anyio.to_thread.run_sync(
             self.is_valid, key
@@ -141,7 +141,7 @@ def build_mcp_http(
     settings = settings or get_settings()
     client = KeyScopedClient(api_base_url or f"http://127.0.0.1:{settings.api_port}")
     server = build_server(
-        client, wait_timeout=float(os.environ.get("ORGRAPH_MCP_WAIT_TIMEOUT", "60"))
+        client, wait_timeout=float(os.environ.get("ANEXA_MCP_WAIT_TIMEOUT", "60"))
     )
     inner = server.streamable_http_app(
         streamable_http_path=MCP_PATH,

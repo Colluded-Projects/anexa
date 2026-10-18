@@ -4,9 +4,9 @@ import json
 import httpx
 import pytest
 
-from orgraph.connectors.base import ConnectorError
-from orgraph.connectors.jira import JiraConnector, to_adf
-from orgraph.graph.ontology import EDGE_TYPES, NODE_LABELS
+from anexa.connectors.base import ConnectorError
+from anexa.connectors.jira import JiraConnector, to_adf
+from anexa.graph.ontology import EDGE_TYPES, NODE_LABELS
 
 SITE = "https://acme.atlassian.net"
 API = f"{SITE}/rest/api/3"

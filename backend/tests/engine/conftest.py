@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-import orgraph.connectors as connectors
-from orgraph.connectors import (
+import anexa.connectors as connectors
+from anexa.connectors import (
     Connector,
     ConnectorContext,
     ConnectorError,
@@ -18,8 +18,8 @@ from orgraph.connectors import (
     OperationResult,
     OperationSpec,
 )
-from orgraph.models import Action, Connection, Operator, OperatorTask
-from orgraph.security import encrypt_secrets
+from anexa.models import Action, Connection, Operator, OperatorTask
+from anexa.security import encrypt_secrets
 
 WS = "ws1"
 

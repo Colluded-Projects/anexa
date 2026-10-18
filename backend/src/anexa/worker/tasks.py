@@ -17,10 +17,10 @@ from .celery_app import celery_app
 
 log = logging.getLogger(__name__)
 
-TICK_LOCK_KEY = "orgraph:scheduler-tick"
+TICK_LOCK_KEY = "anexa:scheduler-tick"
 
 
-@celery_app.task(name="orgraph.execute_run")
+@celery_app.task(name="anexa.execute_run")
 def execute_run(run_id: str) -> dict[str, Any]:
     repos = Repos()
     try:
@@ -155,6 +155,6 @@ def run_scheduler_tick(
     return summary
 
 
-@celery_app.task(name="orgraph.scheduler_tick")
+@celery_app.task(name="anexa.scheduler_tick")
 def scheduler_tick() -> dict[str, Any]:
     return run_scheduler_tick(Repos(settings=get_settings()))

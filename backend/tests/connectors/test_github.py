@@ -3,9 +3,9 @@ import json
 import httpx
 import pytest
 
-from orgraph.connectors.base import ConnectorError
-from orgraph.connectors.github import GitHubConnector
-from orgraph.graph.ontology import EDGE_TYPES, NODE_LABELS
+from anexa.connectors.base import ConnectorError
+from anexa.connectors.github import GitHubConnector
+from anexa.graph.ontology import EDGE_TYPES, NODE_LABELS
 
 API = "https://api.github.com"
 TOKEN = "ghp_testtoken"

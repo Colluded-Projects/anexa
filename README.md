@@ -44,6 +44,14 @@ This starts FalkorDB (which is also the Celery broker), the API, a Celery worker
 the UI. Ports are bound to localhost. Before exposing it to anyone else, copy `.env.example` to
 `.env` and set `ORGRAPH_SECRET_KEY`: it signs logins and encrypts stored credentials.
 
+## Deploy on Render
+
+`render.yaml` is a Blueprint: in Render choose **New > Blueprint** and select this repo. It creates
+FalkorDB (private service with a persistent disk, also the Celery broker), the API (private
+service), a Celery worker with beat embedded, and the public `web` service that serves the UI and
+proxies `/api` and `/mcp` to the API. `ORGRAPH_SECRET_KEY` is generated for you; don't change it
+after the first deploy. Private services and workers require paid instance types.
+
 ## Run it without Docker
 
 Needs [uv](https://docs.astral.sh/uv/) and Node. Four terminals, all in `backend/` except the last:

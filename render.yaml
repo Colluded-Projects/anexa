@@ -1,4 +1,5 @@
 # Render Blueprint: New > Blueprint > pick this repo.
+# The Celery broker URL is derived from ORGRAPH_FALKORDB_HOST/PORT (see config.py).
 # FalkorDB (also the Celery broker) and the API are private services; only the web
 # service is public and it proxies /api and /mcp to the API over Render's private network.
 # Private services and workers need a paid instance type.
@@ -13,8 +14,6 @@ envVarGroups:
         generateValue: true
       - key: ORGRAPH_FALKORDB_PORT
         value: "6379"
-      - key: ORGRAPH_REDIS_URL
-        value: redis://falkordb:6379/1
 
 services:
   - type: pserv

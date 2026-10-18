@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -47,6 +48,14 @@ class Settings(BaseSettings):
     # --- placeholders for the future agent layer (unused by the platform) ----
     openrouter_api_key: str | None = None
     jev_api_key: str | None = None
+
+    @model_validator(mode="after")
+    def _broker_follows_falkordb(self) -> "Settings":
+        # FalkorDB doubles as the broker, so when only its host is configured (as on Render,
+        # where the host name is generated) point Celery at the same server, db 1.
+        if "redis_url" not in self.model_fields_set and "falkordb_host" in self.model_fields_set:
+            self.redis_url = f"redis://{self.falkordb_host}:{self.falkordb_port}/1"
+        return self
 
     def company_graph(self, workspace_id: str) -> str:
         return f"{self.company_graph_prefix}{workspace_id}"

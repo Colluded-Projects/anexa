@@ -1,10 +1,10 @@
 import httpx
 import pytest
 
-from orgraph.config import Settings
-from orgraph.engine.executor import execute_run
-from orgraph.models import OperatorTask, Run
-from orgraph.security import encrypt_secrets
+from anexa.config import Settings
+from anexa.engine.executor import execute_run
+from anexa.models import OperatorTask, Run
+from anexa.security import encrypt_secrets
 
 
 @pytest.fixture
@@ -183,7 +183,7 @@ def test_unknown_run_raises(repos, fake):
 def test_crash_outside_a_task_does_not_leave_run_running(
     repos, fake, make_action, queue, monkeypatch
 ):
-    import orgraph.engine.executor as executor
+    import anexa.engine.executor as executor
 
     def explode(*args, **kwargs):
         raise RuntimeError("store hiccup")

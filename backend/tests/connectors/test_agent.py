@@ -1,7 +1,7 @@
 import pytest
 
-from orgraph.connectors.agent import AgentConnector
-from orgraph.connectors.base import ConnectorError
+from anexa.connectors.agent import AgentConnector
+from anexa.connectors.base import ConnectorError
 
 agent = AgentConnector()
 

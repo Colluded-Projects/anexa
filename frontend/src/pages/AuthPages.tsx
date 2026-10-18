@@ -25,7 +25,7 @@ function AuthLayout({
             <circle cx="23" cy="12" r="4" fill="var(--color-accent)" />
             <circle cx="14" cy="24" r="4" fill="var(--color-accent)" />
           </svg>
-          <span className="text-lg font-semibold tracking-tight">Orgraph</span>
+          <span className="text-lg font-semibold tracking-tight">Anexa</span>
         </div>
         <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-1 mb-6 text-sm text-muted">{subtitle}</p>

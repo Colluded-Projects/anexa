@@ -4,20 +4,20 @@
 #   FalkorDB browser http://localhost:3000
 #
 # Ports are bound to 127.0.0.1. Before exposing this beyond your machine, set
-# ORGRAPH_SECRET_KEY in a .env file next to this one (see .env.example): it
+# ANEXA_SECRET_KEY in a .env file next to this one (see .env.example): it
 # signs logins and encrypts the stored connector credentials.
 
 x-backend: &backend
   build: ./backend
   environment: &backend-env
-    ORGRAPH_STORE_BACKEND: falkor
-    ORGRAPH_FALKORDB_HOST: falkordb
-    ORGRAPH_FALKORDB_PORT: "6379"
+    ANEXA_STORE_BACKEND: falkor
+    ANEXA_FALKORDB_HOST: falkordb
+    ANEXA_FALKORDB_PORT: "6379"
     # FalkorDB is a Redis server, so it doubles as the Celery broker (db 1).
-    ORGRAPH_REDIS_URL: redis://falkordb:6379/1
-    ORGRAPH_SECRET_KEY: ${ORGRAPH_SECRET_KEY:-dev-secret-change-me}
-    ORGRAPH_ENCRYPTION_KEY: ${ORGRAPH_ENCRYPTION_KEY:-}
-    ORGRAPH_CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
+    ANEXA_REDIS_URL: redis://falkordb:6379/1
+    ANEXA_SECRET_KEY: ${ANEXA_SECRET_KEY:-dev-secret-change-me}
+    ANEXA_ENCRYPTION_KEY: ${ANEXA_ENCRYPTION_KEY:-}
+    ANEXA_CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
   depends_on:
     falkordb:
       condition: service_healthy
@@ -45,12 +45,12 @@ services:
 
   worker:
     <<: *backend
-    command: ["celery", "-A", "orgraph.worker.celery_app", "worker", "--loglevel=info"]
+    command: ["celery", "-A", "anexa.worker.celery_app", "worker", "--loglevel=info"]
 
   beat:
     <<: *backend
     command:
-      ["celery", "-A", "orgraph.worker.celery_app", "beat", "--loglevel=info", "--schedule=/tmp/celerybeat-schedule"]
+      ["celery", "-A", "anexa.worker.celery_app", "beat", "--loglevel=info", "--schedule=/tmp/celerybeat-schedule"]
 
   web:
     build: ./frontend

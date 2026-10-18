@@ -1,6 +1,6 @@
-from orgraph.engine import dispatch
-from orgraph.models import Action, Connection
-from orgraph.worker import tasks
+from anexa.engine import dispatch
+from anexa.models import Action, Connection
+from anexa.worker import tasks
 
 
 def test_run_is_failed_not_stuck_when_broker_is_down(repos, monkeypatch):

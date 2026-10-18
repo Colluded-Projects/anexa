@@ -1,4 +1,4 @@
-const TOKEN_KEY = "orgraph.token";
+const TOKEN_KEY = "anexa.token";
 
 export const tokenStore = {
   get(): string | null {

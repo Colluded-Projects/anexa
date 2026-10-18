@@ -1,9 +1,9 @@
 """The rules linker: no AI, only names, ids in text and shared words."""
 
-from orgraph.graph import demo
-from orgraph.graph.evaluate import score
-from orgraph.graph.linking import STRATEGY, link_graph
-from orgraph.graph.linking.rules import (
+from anexa.graph import demo
+from anexa.graph.evaluate import score
+from anexa.graph.linking import STRATEGY, link_graph
+from anexa.graph.linking.rules import (
     decisions,
     experts,
     keywords,

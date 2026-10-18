@@ -74,7 +74,7 @@ def test_cannot_remove_last_owner(client, ada, bob):
 def test_api_key_lifecycle(client, ada, make):
     created = make.api_key(ada, "claude code")
     assert set(created) == {"id", "name", "prefix", "created_at", "last_used_at", "key"}
-    assert created["key"].startswith("ogk_") and created["key"].startswith(created["prefix"])
+    assert created["key"].startswith("axk_") and created["key"].startswith(created["prefix"])
     assert created["last_used_at"] is None
 
     listed = client.get(f"{ada.base}/api-keys", headers=ada.headers)

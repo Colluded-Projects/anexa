@@ -2,10 +2,10 @@ import os
 
 import pytest
 
-from orgraph.store import MemoryStore, StoreError
+from anexa.store import MemoryStore, StoreError
 
 memory_only = pytest.mark.skipif(
-    bool(os.environ.get("ORGRAPH_TEST_FALKOR_LITE")), reason="stubs MemoryStore.query"
+    bool(os.environ.get("ANEXA_TEST_FALKOR_LITE")), reason="stubs MemoryStore.query"
 )
 
 

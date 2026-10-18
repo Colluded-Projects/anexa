@@ -14,7 +14,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from .config import Settings, get_settings
 
-API_KEY_PREFIX = "ogk_"
+API_KEY_PREFIX = "axk_"
 _hasher = PasswordHasher()
 
 

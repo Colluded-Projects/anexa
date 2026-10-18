@@ -118,9 +118,8 @@ def _clip(confidence: float) -> float:
     return min(max(float(confidence), 0.0), 1.0)
 
 
-def link_llm(store: GraphStore, graph: str, ask: Ask) -> dict[str, int]:
-    """Ask Claude once for links, write the ones that pass validation.
-    Returns {edge type: count written}."""
+def catalog(store: GraphStore, graph: str) -> tuple[dict[str, Node], str]:
+    """The nodes Claude may link, by key, and the prompt describing them."""
     nodes: dict[str, Node] = {}
     for label in LABELS:
         for node in store.find_nodes(graph, label):
@@ -133,8 +132,21 @@ def link_llm(store: GraphStore, graph: str, ask: Ask) -> dict[str, int]:
         for e in store.edges(graph)
         if e.src in key_of and e.dst in key_of
     ]
-    answer = ask(build_prompt(nodes, edges))
+    return nodes, build_prompt(nodes, edges)
 
+
+def link_llm(store: GraphStore, graph: str, ask: Ask) -> dict[str, int]:
+    """Ask Claude once for links, write the ones that pass validation.
+    Returns {edge type: count written}."""
+    nodes, prompt = catalog(store, graph)
+    return apply_answer(store, graph, nodes, ask(prompt))
+
+
+def apply_answer(
+    store: GraphStore, graph: str, nodes: dict[str, Node], answer: dict[str, Any]
+) -> dict[str, int]:
+    """Write the proposals in `answer` (shaped like SCHEMA) that pass validation.
+    Used both for the API call and for proposals sent in by Claude Code over MCP."""
     counts: Counter[str] = Counter()
 
     def link(src: Node, type: str, dst: Node, confidence: float, evidence: str) -> None:
@@ -144,7 +156,7 @@ def link_llm(store: GraphStore, graph: str, ask: Ask) -> dict[str, int]:
         )
         counts[type] += 1
 
-    for item in answer["same_person"]:
+    for item in answer.get("same_person", []):
         a, b = nodes.get(item["a"]), nodes.get(item["b"])
         if a is None or b is None or a is b:
             continue
@@ -152,7 +164,7 @@ def link_llm(store: GraphStore, graph: str, ask: Ask) -> dict[str, int]:
             continue
         link(a, "SAME_AS", b, item["confidence"], item["reason"])
 
-    for item in answer["related"]:
+    for item in answer.get("related", []):
         a, b = nodes.get(item["a"]), nodes.get(item["b"])
         if a is None or b is None or a is b:
             continue
@@ -160,7 +172,7 @@ def link_llm(store: GraphStore, graph: str, ask: Ask) -> dict[str, int]:
             continue
         link(a, "RELATED_TO", b, item["confidence"], item["quote"])
 
-    for item in answer["decisions"]:
+    for item in answer.get("decisions", []):
         source = nodes.get(item["source"])
         people = [nodes.get(key) for key in item["decided_by"]]
         affected = [nodes.get(key) for key in item["affects"]]

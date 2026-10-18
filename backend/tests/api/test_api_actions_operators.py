@@ -110,7 +110,7 @@ def test_api_key_runs_are_triggered_by_mcp(client, ada, make):
 
 
 def test_run_reports_queue_failure_as_503(client, ada, make, monkeypatch):
-    from orgraph.engine import dispatch
+    from anexa.engine import dispatch
 
     def boom(*args, **kwargs):
         raise ConnectionError("broker down")

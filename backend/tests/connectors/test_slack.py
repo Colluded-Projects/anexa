@@ -3,9 +3,9 @@ import json
 import httpx
 import pytest
 
-from orgraph.connectors.base import ConnectorError
-from orgraph.connectors.slack import SlackConnector
-from orgraph.graph.ontology import EDGE_TYPES, NODE_LABELS
+from anexa.connectors.base import ConnectorError
+from anexa.connectors.slack import SlackConnector
+from anexa.graph.ontology import EDGE_TYPES, NODE_LABELS
 
 API = "https://slack.com/api"
 TOKEN = "xoxb-test-token"

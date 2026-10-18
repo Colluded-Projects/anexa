@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
         async with mcp_lifespan():
             yield
 
-    app = FastAPI(title="Orgraph", version=__version__, lifespan=lifespan)
+    app = FastAPI(title="Anexa", version=__version__, lifespan=lifespan)
     # MCP over HTTP for Claude Code, authenticated with a workspace API key.
     app.router.routes.append(Route(MCP_PATH, mcp_app))
     app.add_middleware(
@@ -85,4 +85,4 @@ def run() -> None:
     import uvicorn
 
     settings = get_settings()
-    uvicorn.run("orgraph.api.main:app", host=settings.api_host, port=settings.api_port)
+    uvicorn.run("anexa.api.main:app", host=settings.api_host, port=settings.api_port)

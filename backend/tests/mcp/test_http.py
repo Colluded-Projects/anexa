@@ -13,7 +13,7 @@ import uvicorn
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-from orgraph.config import get_settings
+from anexa.config import get_settings
 
 
 @pytest.fixture
@@ -21,9 +21,9 @@ def live(store, monkeypatch):
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
-    monkeypatch.setenv("ORGRAPH_API_PORT", str(port))
+    monkeypatch.setenv("ANEXA_API_PORT", str(port))
     get_settings.cache_clear()
-    from orgraph.api.main import create_app
+    from anexa.api.main import create_app
 
     server = uvicorn.Server(
         uvicorn.Config(create_app(), host="127.0.0.1", port=port, log_level="warning")
@@ -131,7 +131,7 @@ def test_requests_without_a_valid_key_are_rejected(live):
     ws, headers, key = signup(live, "ada@acme.io")
 
     assert post_initialize(live, {}).status_code == 401
-    assert post_initialize(live, {"Authorization": "Bearer ogk_made-up"}).status_code == 401
+    assert post_initialize(live, {"Authorization": "Bearer axk_made-up"}).status_code == 401
     # A login token is not an API key: MCP access is always a revocable key.
     assert post_initialize(live, headers).status_code == 401
     good = {"Authorization": f"Bearer {key['key']}"}

@@ -1,5 +1,5 @@
-from orgraph.graph.demo import GOLD
-from orgraph.graph.linking import STRATEGY
+from anexa.graph.demo import GOLD
+from anexa.graph.linking import STRATEGY
 
 
 def test_demo_link_and_score(client, ada):

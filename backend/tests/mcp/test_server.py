@@ -5,8 +5,8 @@ import httpx
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError, UnexpectedToolError
 
-from orgraph.mcp_server.client import ApiClient
-from orgraph.mcp_server.server import build_server
+from anexa.mcp_server.client import ApiClient
+from anexa.mcp_server.server import build_server
 
 PREFIX = "/api/workspaces/ws1"
 
@@ -47,6 +47,8 @@ EXPECTED_TOOLS = {
     "graph_get_node",
     "graph_add_node",
     "graph_add_edge",
+    "graph_link_prompt",
+    "graph_submit_links",
     "graph_query",
 }
 
@@ -111,7 +113,7 @@ def test_read_tools(api, call, tool, args, path, query, response, expected):
 
     assert (api.last.method, api.last.url.path) == ("GET", path)
     assert dict(api.last.url.params) == query
-    assert api.last.headers["X-API-Key"] == "ogk_test"
+    assert api.last.headers["X-API-Key"] == "axk_test"
 
 
 def test_whoami(api, call):
@@ -329,7 +331,7 @@ def test_api_error_is_reported_as_status_and_detail(api, server):
 
     text = error_text(server, "get_action", {"action_id": "nope"})
 
-    assert "Orgraph API error 404: Action not found" in text
+    assert "Anexa API error 404: Action not found" in text
     assert "Traceback" not in text
 
 

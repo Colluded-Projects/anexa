@@ -1,4 +1,4 @@
-from orgraph.models import Run
+from anexa.models import Run
 
 
 def test_schedule_crud(client, ada, make):

@@ -3,8 +3,8 @@
 The memory backend always runs. The falkor backend runs when a real FalkorDB
 is reachable, selected by environment:
 
-  ORGRAPH_TEST_FALKOR_HOST / ORGRAPH_TEST_FALKOR_PORT   server (default localhost:6379)
-  ORGRAPH_TEST_FALKOR_LITE=1                            embedded falkordblite instead
+  ANEXA_TEST_FALKOR_HOST / ANEXA_TEST_FALKOR_PORT   server (default localhost:6379)
+  ANEXA_TEST_FALKOR_LITE=1                            embedded falkordblite instead
 
 A plain Redis/Valkey without the graph module counts as unreachable.
 """
@@ -16,28 +16,28 @@ import uuid
 
 import pytest
 
-from orgraph.store.base import GraphStore, NotFound, StoreError
-from orgraph.store.memory import MemoryStore
+from anexa.store.base import GraphStore, NotFound, StoreError
+from anexa.store.memory import MemoryStore
 
 
 def _falkor_client():
     """Return a client for a real FalkorDB engine, or None when there is none."""
     try:
-        if os.environ.get("ORGRAPH_TEST_FALKOR_LITE"):
+        if os.environ.get("ANEXA_TEST_FALKOR_LITE"):
             import tempfile
 
             from redislite.falkordb_client import FalkorDB as LiteDB
 
-            client = LiteDB(os.path.join(tempfile.mkdtemp(prefix="orgraph-falkor-"), "test.db"))
+            client = LiteDB(os.path.join(tempfile.mkdtemp(prefix="anexa-falkor-"), "test.db"))
         else:
             from falkordb import FalkorDB
 
             client = FalkorDB(
-                host=os.environ.get("ORGRAPH_TEST_FALKOR_HOST", "localhost"),
-                port=int(os.environ.get("ORGRAPH_TEST_FALKOR_PORT", "6379")),
+                host=os.environ.get("ANEXA_TEST_FALKOR_HOST", "localhost"),
+                port=int(os.environ.get("ANEXA_TEST_FALKOR_PORT", "6379")),
                 socket_connect_timeout=1,
             )
-        probe = client.select_graph(f"orgraph_probe_{uuid.uuid4().hex}")
+        probe = client.select_graph(f"anexa_probe_{uuid.uuid4().hex}")
         probe.query("RETURN 1")  # fails on a server without the graph module
         try:
             probe.delete()
@@ -60,7 +60,7 @@ def store(request) -> GraphStore:
     client = request.getfixturevalue("falkor_client")
     if client is None:
         pytest.skip("no reachable FalkorDB")
-    from orgraph.store.falkor import FalkorStore
+    from anexa.store.falkor import FalkorStore
 
     return FalkorStore(client)
 
@@ -71,7 +71,7 @@ def new_graph(store):
     names: list[str] = []
 
     def make() -> str:
-        names.append(f"orgraph_test_{uuid.uuid4().hex}")
+        names.append(f"anexa_test_{uuid.uuid4().hex}")
         return names[-1]
 
     yield make

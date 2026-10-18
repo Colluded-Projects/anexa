@@ -2,11 +2,11 @@
 
 import json
 
-from orgraph.config import get_settings
-from orgraph.graph import demo
-from orgraph.graph.evaluate import score
-from orgraph.graph.linking import STRATEGY, link_graph, llm
-from orgraph.graph.linking.llm import SCHEMA, link_llm
+from anexa.config import get_settings
+from anexa.graph import demo
+from anexa.graph.evaluate import score
+from anexa.graph.linking import STRATEGY, link_graph, llm
+from anexa.graph.linking.llm import SCHEMA, link_llm
 
 G = "ws_demo"
 
@@ -161,7 +161,7 @@ def test_link_graph_skips_llm_when_disabled(store, settings):
 
 
 def test_link_graph_uses_claude_when_enabled(store, monkeypatch):
-    monkeypatch.setenv("ORGRAPH_LLM_ENABLED", "true")
+    monkeypatch.setenv("ANEXA_LLM_ENABLED", "true")
     get_settings.cache_clear()
     monkeypatch.setattr(llm, "ask_claude", fake_ask([]))
     demo.load(store, G)

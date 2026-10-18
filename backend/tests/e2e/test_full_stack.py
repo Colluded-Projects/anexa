@@ -12,10 +12,10 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from orgraph.mcp_server.client import ApiClient
-from orgraph.mcp_server.server import build_server
-from orgraph.repos import Repos
-from orgraph.worker.tasks import run_scheduler_tick
+from anexa.mcp_server.client import ApiClient
+from anexa.mcp_server.server import build_server
+from anexa.repos import Repos
+from anexa.worker.tasks import run_scheduler_tick
 
 GITHUB_TOKEN = "ghp_e2e-secret-token"
 SLACK_TOKEN = "xoxb-e2e-secret-token"
@@ -23,7 +23,7 @@ SLACK_TOKEN = "xoxb-e2e-secret-token"
 
 @pytest.fixture
 def api(store, settings):
-    from orgraph.api.main import create_app
+    from anexa.api.main import create_app
 
     with TestClient(create_app()) as client:
         yield client
@@ -227,7 +227,7 @@ def test_agent_is_an_unconnected_shell_linked_to_work(mcp):
 
 
 @pytest.mark.skipif(
-    not os.environ.get("ORGRAPH_TEST_FALKOR_LITE"), reason="raw Cypher needs a FalkorDB engine"
+    not os.environ.get("ANEXA_TEST_FALKOR_LITE"), reason="raw Cypher needs a FalkorDB engine"
 )
 def test_cypher_over_mcp_reads_the_synced_graph_and_cannot_write(mcp, external):
     operator = build_digest_operator(mcp)

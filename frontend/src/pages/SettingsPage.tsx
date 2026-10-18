@@ -328,7 +328,7 @@ export function mcpConfig(mcpUrl: string, apiKey: string): string {
   return JSON.stringify(
     {
       mcpServers: {
-        orgraph: {
+        anexa: {
           type: "http",
           url: mcpUrl,
           headers: { Authorization: `Bearer ${apiKey}` },
@@ -345,10 +345,10 @@ export function mcpStdioConfig(apiUrl: string, apiKey: string): string {
   return JSON.stringify(
     {
       mcpServers: {
-        orgraph: {
+        anexa: {
           command: "uv",
-          args: ["run", "--directory", "<repo>/backend", "orgraph-mcp"],
-          env: { ORGRAPH_API_URL: apiUrl, ORGRAPH_API_KEY: apiKey },
+          args: ["run", "--directory", "<repo>/backend", "anexa-mcp"],
+          env: { ANEXA_API_URL: apiUrl, ANEXA_API_KEY: apiKey },
         },
       },
     },
@@ -376,7 +376,7 @@ function ConnectClaudeCode({
   const [error, setError] = useState<string | null>(null);
   const key = apiKey ?? PLACEHOLDER_KEY;
   const config = mcpConfig(mcpUrl, key);
-  const command = `claude mcp add --transport http orgraph ${mcpUrl} --header "Authorization: Bearer ${key}"`;
+  const command = `claude mcp add --transport http anexa ${mcpUrl} --header "Authorization: Bearer ${key}"`;
   const apiUrl = mcpUrl.replace(/\/mcp\/?$/, "");
 
   async function generate() {

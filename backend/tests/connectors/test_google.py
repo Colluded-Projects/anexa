@@ -7,9 +7,9 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from orgraph.connectors.base import ConnectorError
-from orgraph.connectors.google import GoogleConnector, document_text
-from orgraph.graph.ontology import EDGE_TYPES, NODE_LABELS
+from anexa.connectors.base import ConnectorError
+from anexa.connectors.google import GoogleConnector, document_text
+from anexa.graph.ontology import EDGE_TYPES, NODE_LABELS
 
 DRIVE = "https://www.googleapis.com/drive/v3"
 DOCS = "https://docs.googleapis.com/v1"
@@ -31,7 +31,7 @@ def service_account(rsa_key):
     ).decode()
     return {
         "type": "service_account",
-        "client_email": "orgraph@acme.iam.gserviceaccount.com",
+        "client_email": "anexa@acme.iam.gserviceaccount.com",
         "private_key_id": "key-1",
         "private_key": pem,
         "token_uri": TOKEN_URI,
@@ -97,7 +97,7 @@ def test_service_account_grant_signs_a_jwt_and_caches_the_token(
     claims = jwt.decode(
         assertion, rsa_key.public_key(), algorithms=["RS256"], audience=TOKEN_URI
     )
-    assert claims["iss"] == "orgraph@acme.iam.gserviceaccount.com"
+    assert claims["iss"] == "anexa@acme.iam.gserviceaccount.com"
     assert claims["sub"] == "ada@acme.com"
     assert "auth/drive" in claims["scope"] and "auth/documents" in claims["scope"]
     assert claims["exp"] - claims["iat"] == 3600

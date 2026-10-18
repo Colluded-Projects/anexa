@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ...graph import demo
 from ...graph.evaluate import score
-from ...graph.linking import link_graph
+from ...graph.linking import link_graph, llm
 from ...graph.linking.rules import experts
 from ...graph.ontology import EDGE_TYPES, NODE_LABELS
 from ...models import new_id, utcnow
@@ -24,6 +24,7 @@ from ..schemas import (
     GraphQueryOut,
     GraphStatsOut,
     LinkEdgeIn,
+    LinkProposalsIn,
     LinkReviewOut,
     SubgraphOut,
 )
@@ -196,6 +197,23 @@ def load_demo(ctx: WorkspaceDep) -> dict[str, Any]:
 def link(ctx: WorkspaceDep) -> dict[str, Any]:
     """Run the linker over the whole graph."""
     return link_graph(ctx.repos.store, ctx.graph)
+
+
+@router.get("/link/prompt")
+def link_prompt(ctx: WorkspaceDep) -> dict[str, Any]:
+    """The catalog the LLM linker reads, for a model outside the platform
+    (Claude Code over MCP) to answer with POST /link/proposals."""
+    nodes, prompt = llm.catalog(ctx.repos.store, ctx.graph)
+    return {"prompt": prompt, "nodes": len(nodes), "schema": llm.SCHEMA}
+
+
+@router.post("/link/proposals")
+def link_proposals(body: LinkProposalsIn, ctx: WorkspaceDep) -> dict[str, Any]:
+    """Validate proposed links with the same checks as the LLM linker and write
+    the ones that pass. Unsure ones show up in the review queue."""
+    nodes, _ = llm.catalog(ctx.repos.store, ctx.graph)
+    written = llm.apply_answer(ctx.repos.store, ctx.graph, nodes, body.model_dump())
+    return {"links": written}
 
 
 @router.get("/link/score")

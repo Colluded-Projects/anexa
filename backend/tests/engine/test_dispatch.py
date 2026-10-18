@@ -1,7 +1,7 @@
 import pytest
 
-from orgraph.engine.dispatch import TargetNotFound, submit_run
-from orgraph.models import OperatorTask
+from anexa.engine.dispatch import TargetNotFound, submit_run
+from anexa.models import OperatorTask
 
 
 def test_submit_action_run_executes_eagerly(repos, fake, make_action, ws):
@@ -46,7 +46,7 @@ def test_target_in_another_workspace(repos, fake, make_action):
 
 
 def test_run_is_queued_before_the_task_is_sent(repos, fake, make_action, ws, monkeypatch):
-    from orgraph.worker import tasks
+    from anexa.worker import tasks
 
     sent = []
     monkeypatch.setattr(tasks.execute_run, "delay", lambda run_id: sent.append(run_id))

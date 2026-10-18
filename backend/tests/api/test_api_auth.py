@@ -77,7 +77,7 @@ def test_me_lists_workspaces(client, ada):
 def test_missing_or_bad_credentials_are_401(client, ada):
     assert client.get("/api/me").status_code == 401
     assert client.get("/api/me", headers={"Authorization": "Bearer garbage"}).status_code == 401
-    assert client.get("/api/me", headers={"X-API-Key": "ogk_nope"}).status_code == 401
+    assert client.get("/api/me", headers={"X-API-Key": "axk_nope"}).status_code == 401
     assert client.get("/api/connectors").status_code == 401
     assert client.get(f"{ada.base}/actions").status_code == 401
     assert client.get("/api/me").json() == {"detail": "not authenticated"}

@@ -1,5 +1,5 @@
-from orgraph.connectors.base import GraphDelta, NodeUpsert
-from orgraph.graph.ingest import apply_delta
+from anexa.connectors.base import GraphDelta, NodeUpsert
+from anexa.graph.ingest import apply_delta
 
 
 def test_connector_props_cannot_overwrite_identity(store):

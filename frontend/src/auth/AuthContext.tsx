@@ -18,7 +18,7 @@ import {
   type WorkspaceApi,
 } from "../api";
 
-const WORKSPACE_KEY = "orgraph.workspace";
+const WORKSPACE_KEY = "anexa.workspace";
 
 interface AuthState {
   /** "loading" while an existing token is being checked on startup. */

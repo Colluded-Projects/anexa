@@ -1,0 +1,65 @@
+# Render Blueprint: New > Blueprint > pick this repo.
+# FalkorDB (also the Celery broker) and the API are private services; only the web
+# service is public and it proxies /api and /mcp to the API over Render's private network.
+# Private services and workers need a paid instance type.
+
+envVarGroups:
+  - name: anexa-shared
+    envVars:
+      - key: ANEXA_STORE_BACKEND
+        value: falkor
+      # Signs logins and encrypts stored credentials. Do not change after first deploy.
+      - key: ANEXA_SECRET_KEY
+        generateValue: true
+      - key: ANEXA_FALKORDB_PORT
+        value: "6379"
+      - key: ANEXA_REDIS_URL
+        value: redis://falkordb:6379/1
+
+services:
+  - type: pserv
+    name: falkordb
+    runtime: image
+    image:
+      url: docker.io/falkordb/falkordb:latest
+    plan: starter
+    disk:
+      name: falkordb-data
+      mountPath: /var/lib/falkordb/data
+      sizeGB: 5
+
+  - type: pserv
+    name: api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    envVars:
+      - fromGroup: anexa-shared
+      - key: ANEXA_FALKORDB_HOST
+        fromService: { type: pserv, name: falkordb, property: host }
+
+  - type: worker
+    name: worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    # Celery worker with the beat scheduler embedded (-B): one process, one service.
+    dockerCommand: celery -A anexa.worker.celery_app worker -B --loglevel=info --schedule=/tmp/celerybeat-schedule
+    envVars:
+      - fromGroup: anexa-shared
+      - key: ANEXA_FALKORDB_HOST
+        fromService: { type: pserv, name: falkordb, property: host }
+
+  - type: web
+    name: web
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: starter
+    envVars:
+      - key: PORT
+        value: "80"
+      - key: API_UPSTREAM
+        fromService: { type: pserv, name: api, property: hostport }

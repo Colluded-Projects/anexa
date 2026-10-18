@@ -29,7 +29,7 @@ function Logo() {
         <circle cx="23" cy="12" r="4" fill="var(--color-accent)" />
         <circle cx="14" cy="24" r="4" fill="var(--color-accent)" />
       </svg>
-      <span className="text-[15px] font-semibold tracking-tight">Orgraph</span>
+      <span className="text-[15px] font-semibold tracking-tight">Anexa</span>
     </div>
   );
 }

@@ -2,10 +2,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from orgraph.models import OperatorTask, Run, Schedule
-from orgraph.worker import tasks
-from orgraph.worker.celery_app import celery_app
-from orgraph.worker.tasks import NoLock, RedisLock, run_scheduler_tick
+from anexa.models import OperatorTask, Run, Schedule
+from anexa.worker import tasks
+from anexa.worker.celery_app import celery_app
+from anexa.worker.tasks import NoLock, RedisLock, run_scheduler_tick
 
 NOW = datetime(2026, 1, 5, 12, 0, 30, tzinfo=UTC)
 PAST = "2026-01-05T12:00:00.000Z"
@@ -45,9 +45,9 @@ def test_celery_is_configured_from_settings(settings):
     assert conf.task_serializer == "json" and conf.accept_content == ["json"]
     assert conf.timezone == "UTC" and conf.task_acks_late is True
     entry = conf.beat_schedule["scheduler-tick"]
-    assert entry["task"] == "orgraph.scheduler_tick"
+    assert entry["task"] == "anexa.scheduler_tick"
     assert entry["schedule"] == settings.scheduler_tick_seconds
-    assert {"orgraph.execute_run", "orgraph.scheduler_tick"} <= set(celery_app.tasks)
+    assert {"anexa.execute_run", "anexa.scheduler_tick"} <= set(celery_app.tasks)
 
 
 def test_execute_run_task(repos, fake, make_action, ws):

@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from orgraph.store.base import GraphStore, NotFound, StoreError
-from orgraph.store.falkor import (
+from anexa.store.base import GraphStore, NotFound, StoreError
+from anexa.store.falkor import (
     _NULL,
     _TAG,
     FalkorStore,

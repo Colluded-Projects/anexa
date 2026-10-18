@@ -5,8 +5,8 @@ from typing import Any
 import httpx
 import pytest
 
-from orgraph.mcp_server.client import ApiClient
-from orgraph.mcp_server.server import build_server
+from anexa.mcp_server.client import ApiClient
+from anexa.mcp_server.server import build_server
 
 WS = "ws1"
 PREFIX = f"/api/workspaces/{WS}"
@@ -70,7 +70,7 @@ def api() -> FakeApi:
 @pytest.fixture
 def client(api) -> ApiClient:
     return ApiClient(
-        "http://api.test", "ogk_test", transport=httpx.MockTransport(api.handler)
+        "http://api.test", "axk_test", transport=httpx.MockTransport(api.handler)
     )
 
 

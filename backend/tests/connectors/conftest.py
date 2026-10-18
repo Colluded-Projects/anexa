@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from orgraph.connectors.base import ConnectorContext, GraphDelta
+from anexa.connectors.base import ConnectorContext, GraphDelta
 
 
 @pytest.fixture

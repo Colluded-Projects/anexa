@@ -50,7 +50,7 @@ the UI. Ports are bound to localhost. Before exposing it to anyone else, copy `.
 FalkorDB (private service with a persistent disk, also the Celery broker), the API (private
 service), a Celery worker with beat embedded, and the public `web` service that serves the UI and
 proxies `/api` and `/mcp` to the API. `ORGRAPH_SECRET_KEY` is generated for you; don't change it
-after the first deploy. Private services and workers require paid instance types.
+after the first deploy. Render redeploys on every push to `main`. Private services and workers require paid instance types.
 
 ## Run it without Docker
 

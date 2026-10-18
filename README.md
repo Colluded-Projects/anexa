@@ -125,6 +125,11 @@ npm test && npm run build
 `backend/tests/e2e` runs the whole path in one process: MCP tool → REST API → Celery (eager) →
 executor → real connector code → company graph. External services are mocked in every test.
 
+## Built with AI assistance
+
+Built for Graph Hacks 2026 by our team. We used Claude Code during development, and Claude Code
+is also part of the product: it is the linker model over MCP.
+
 ## Layout
 
 ```
